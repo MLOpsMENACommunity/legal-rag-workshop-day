@@ -1,7 +1,5 @@
-# Slides — Workshop 4: From Laptop to Load
+# Slides — Workshop 4: Serving & Performance Optimization
 
-*Serving & optimization*
+*Docker Compose · load testing · caching*
 
 https://claude.ai/artifact/P7LZaFuAG6uNhMnrqF1hWV
-
-14 slides · speaker notes on every slide · export to PowerPoint or PDF from the deck's Share menu.

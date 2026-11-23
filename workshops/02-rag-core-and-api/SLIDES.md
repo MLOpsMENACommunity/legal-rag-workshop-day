@@ -1,7 +1,5 @@
-# Slides — Workshop 2: Ask the Code
+# Slides — Workshop 2: Hybrid Retrieval & RAG API
 
-*Hybrid retrieval & a citing API*
+*Dense + BM25 · RRF · reranking · citations*
 
 https://claude.ai/artifact/BbPbJbKV2y9sobLcSyumry
-
-16 slides · speaker notes on every slide · export to PowerPoint or PDF from the deck's Share menu.

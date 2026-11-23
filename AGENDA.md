@@ -5,13 +5,13 @@
 | الوقت | المدة | الجزء |
 |-------|------|-------|
 | 10:00 – 10:20 | 20 د | **Opening** — architecture diagram لليوم كله + `make check` على كل لابتوب |
-| 10:20 – 11:30 | 70 د | **W1 — Taming the PDF** · data & corpus |
-| 11:30 – 12:40 | 70 د | **W2 — Ask the Code** · retrieval & API |
+| 10:20 – 11:30 | 70 د | **W1 — Arabic Corpus Engineering** |
+| 11:30 – 12:40 | 70 د | **W2 — Hybrid Retrieval & RAG API** |
 | 12:40 – 13:25 | 45 د | غدا + صلاة |
-| 13:25 – 14:25 | 60 د | **W3 — Trust, but Measure** · evaluation |
-| 14:25 – 15:25 | 60 د | **W4 — From Laptop to Load** · serving & optimization |
+| 13:25 – 14:25 | 60 د | **W3 — RAG Evaluation** |
+| 14:25 – 15:25 | 60 د | **W4 — Serving & Performance Optimization** |
 | 15:25 – 15:40 | 15 د | break |
-| 15:40 – 16:45 | 65 د | **W5 — Watch, Guard, Gate** · observability, guardrails & MLOps |
+| 15:40 – 16:45 | 65 د | **W5 — Observability, Guardrails & CI/CD** |
 | 16:45 – 17:00 | 15 د | **Demos** — 2-3 فرق + wrap-up |
 
 **إجمالي وقت الـworkshops: 325 دقيقة (~5.4 ساعة).** الباقي breaks وopening وdemos.

@@ -12,11 +12,11 @@
 
 | # | Workshop | بيتكلم عن | المدة | Slides | اللي بيخرج منه |
 |---|----------|-----------|------|--------|----------------|
-| 1 | [**Taming the PDF**](workshops/01-data-and-corpus/) | Data & corpus | 70 د | [deck](https://claude.ai/artifact/R2Mcwur69puABdJoYSSdXQ) | `articles.json` — record لكل مادة، validated |
-| 2 | [**Ask the Code**](workshops/02-rag-core-and-api/) | Retrieval & API | 70 د | [deck](https://claude.ai/artifact/BbPbJbKV2y9sobLcSyumry) | `/ask` بيرجّع إجابة + أرقام مواد |
-| 3 | [**Trust, but Measure**](workshops/03-evaluation/) | Evaluation | 60 د | [deck](https://claude.ai/artifact/PYnKQ9vs7zX3EQQZEkNzZj) | RAGAS على golden set + MLflow runs |
-| 4 | [**From Laptop to Load**](workshops/04-serving-and-optimization/) | Serving & optimization | 60 د | [deck](https://claude.ai/artifact/P7LZaFuAG6uNhMnrqF1hWV) | `docker compose up` + p95 مقاس |
-| 5 | [**Watch, Guard, Gate**](workshops/05-observability-guardrails-mlops/) | Observability, guardrails & MLOps | 65 د | [deck](https://claude.ai/artifact/B6v8TmYNqgmMyWjSW34UAe) | Langfuse traces + guardrails + CI gate |
+| 1 | [**Arabic Corpus Engineering**](workshops/01-data-and-corpus/) | PDF parsing · normalization · validation | 70 د | [deck](https://claude.ai/artifact/R2Mcwur69puABdJoYSSdXQ) | `articles.json` — record لكل مادة، validated |
+| 2 | [**Hybrid Retrieval & RAG API**](workshops/02-rag-core-and-api/) | Dense + BM25 · RRF · reranking · citations | 70 د | [deck](https://claude.ai/artifact/BbPbJbKV2y9sobLcSyumry) | `/ask` بيرجّع إجابة + أرقام مواد |
+| 3 | [**RAG Evaluation**](workshops/03-evaluation/) | RAGAS · golden sets · MLflow experiments | 60 د | [deck](https://claude.ai/artifact/PYnKQ9vs7zX3EQQZEkNzZj) | RAGAS على golden set + MLflow runs |
+| 4 | [**Serving & Performance Optimization**](workshops/04-serving-and-optimization/) | Docker Compose · load testing · caching | 60 د | [deck](https://claude.ai/artifact/P7LZaFuAG6uNhMnrqF1hWV) | `docker compose up` + p95 مقاس |
+| 5 | [**Observability, Guardrails & CI/CD**](workshops/05-observability-guardrails-mlops/) | Langfuse · injection defence · quality gates | 65 د | [deck](https://claude.ai/artifact/B6v8TmYNqgmMyWjSW34UAe) | Langfuse traces + guardrails + CI gate |
 
 التوقيت بالدقيقة في [AGENDA.md](AGENDA.md). اللي لازم يتسطّب قبل اليوم في [PREWORK.md](PREWORK.md).
 

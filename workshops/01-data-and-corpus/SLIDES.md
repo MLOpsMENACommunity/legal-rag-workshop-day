@@ -1,7 +1,5 @@
-# Slides — Workshop 1: Taming the PDF
+# Slides — Workshop 1: Arabic Corpus Engineering
 
-*Data & corpus engineering*
+*PDF parsing · normalization · validation*
 
 https://claude.ai/artifact/R2Mcwur69puABdJoYSSdXQ
-
-16 slides · speaker notes on every slide · export to PowerPoint or PDF from the deck's Share menu.
