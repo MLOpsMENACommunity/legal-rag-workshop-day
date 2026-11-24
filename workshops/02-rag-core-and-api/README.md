@@ -1,36 +1,36 @@
-# Workshop 2 — Ask the Code
+# Workshop 2 — Hybrid Retrieval & RAG API
 
-*Hybrid retrieval & a citing API*
+*Dense + BM25 · RRF · reranking · citations*
 
-**70 دقيقة · 11:30 – 12:40** · [Slides](SLIDES.md)
+**70 minutes · 11:30 – 12:40** · [Slides](SLIDES.md)
 
-## الهدف
+## Goal
 
-من `articles.json` لـendpoint شغال: سؤال بالعربي → إجابة + **أرقام مواد** يقدر محامي يراجعها.
+From `articles.json` to a working endpoint: an Arabic question in, an answer plus **article numbers** a lawyer can verify out.
 
-## الفكرة المركزية
+## Core idea
 
-**الـdense embeddings لوحدها مش كفاية في النص القانوني العربي.** لما حد يسأل عن "المادة 147" أو عن مصطلح قانوني محدد، الـsemantic search بيجيب حاجات "شبهها" مش هي. عشان كده الحل hybrid: dense + BM25 وبعدين fusion.
+**Dense embeddings alone are not enough for Arabic legal text.** When someone asks about "Article 147" or a specific legal term, semantic search returns things that are *similar*, not the thing asked for. The fix is hybrid retrieval: dense + BM25, then fusion.
 
-## الكود اللي هنشرحه
+## Code we walk through
 
-| الملف | اللي بيشرحه |
-|------|-------------|
-| `src/vectordb/build_index.py` | بناء الـcollection والـpayload |
-| `src/retrieval/retrieval.py` | **الملف النجم في الـworkshop ده** — hybrid + RRF |
-| `src/reranker/` | cross-encoder reranking بعد الـretrieval |
-| `src/api/versions/v1/rag.py` | الـendpoint كامل |
+| File | What it teaches |
+|------|-----------------|
+| `src/vectordb/build_index.py` | Building the collection and payload |
+| `src/retrieval/retrieval.py` | **The star file of this workshop** — hybrid + RRF |
+| `src/reranker/` | Cross-encoder reranking after retrieval |
+| `src/api/versions/v1/rag.py` | The full endpoint |
 | `src/prompt_template/` | `build_llm_request` + `ensure_article_citations` |
 | `src/utils/arabic_text.py` | `normalize_arabic_for_sparse` |
 
-### الـhybrid retrieval — الجزء اللي هنقعد عليه
+### Hybrid retrieval
 
 ```python
 prefetch = [
-    models.Prefetch(          # dense — المعنى
+    models.Prefetch(          # dense — meaning
         query=vector, using=lang,
         limit=retrieval_limit, score_threshold=score_threshold),
-    models.Prefetch(          # sparse — الكلمة بالظبط
+    models.Prefetch(          # sparse — exact terms
         query=models.Document(text=sparse_text, model="Qdrant/bm25"),
         using=f"bm25_{lang}", limit=retrieval_limit),
 ]
@@ -41,27 +41,27 @@ response = await self.client.query_points(
     limit=retrieval_reranked_limit, with_payload=True)
 ```
 
-تلات نقاط لازم تتشرح هنا:
+Three points to explain:
 
-1. **ليه فيه vector لكل لغة** (`using=lang`) ومش موديل واحد multilingual
-2. **ليه الـBM25 محتاج normalization مختلف** (`normalize_arabic_for_sparse`) — الـsparse بيشوف التشكيل والألفات كـtokens مختلفة
-3. **RRF vs score fusion** — ليه الـrank أأمن من الـscore لما بتدمج scorers مختلفين مقاييسهم مختلفة
+1. **Why one vector per language** (`using=lang`) instead of a single multilingual model
+2. **Why BM25 needs its own normalization** (`normalize_arabic_for_sparse`) — sparse search treats diacritics and alef variants as different tokens
+3. **RRF vs score fusion** — why ranks are safer than scores when fusing scorers on different scales
 
-### الـcitation enforcement
+### Citation enforcement
 
 ```python
-response.answer = ensure_article_citations(response.answer, reanked_payloads, lang)
+response.answer = ensure_article_citations(response.answer, reranked_payloads, lang)
 ```
 
-دي أهم سطر في الـendpoint. الـLLM ممكن يجيب إجابة سليمة وينسى يستشهد، أو يستشهد بمادة ماشافهاش. الـenforcement بعد الـgeneration هو اللي بيخلي النظام قابل للمراجعة.
+The most important line in the endpoint. The LLM may give a correct answer and forget to cite, or cite an article it never saw. Enforcing citations after generation is what makes the system reviewable.
 
-**سؤال للقاعة:** لو الـLLM استشهد بمادة مش في الـcontext، نعمل إيه؟ نمسحه؟ نرفض الإجابة كلها؟ نرجّعها مع warning؟ (مفيش رد واحد صح — دي مناقشة 5 دقايق وبتوصّل فكرة الـguardrails في W5)
+**Question for the room:** if the LLM cites an article that was not in the context, do we remove the citation, reject the whole answer, or return it with a warning? There is no single right answer — a five-minute discussion that sets up guardrails in W5.
 
-### الـAPI contract
+### API contract
 
 ```http
 POST /ask
-{"question": "ما هي شروط العقد؟"}
+{"question": "What are the conditions of a contract?"}
 
 200
 {
@@ -70,40 +70,40 @@ POST /ask
 }
 ```
 
-ريبو عمر بيسمّيه `/api/v1/rag/answer`. الـhandbook بيقول `/ask`. هنمشي على `/ask` عشان الـrubric، مع الـversioned path كـalias.
+The reference repo serves `/api/v1/rag/answer`; the handbook specifies `/ask`. We expose `/ask` to match the rubric, with the versioned path as an alias.
 
-`sources` أرقام مواد — **مش chunk IDs ولا أرقام صفحات**. ده الفرق بين نظام حقيقي وdemo.
+`sources` are article citations — **not chunk IDs, not page numbers**. That is the difference between a real system and a demo.
 
-## التايم لاين
+## Timeline
 
-| الوقت | الجزء |
-|------|-------|
-| 10 د | Chunking بالمادة → embedding → Qdrant collection |
-| 15 د | **Hands-on:** الـdense search لوحده. اسأل "المادة 147" وشوف النتيجة |
-| 15 د | زوّد الـBM25 + RRF → نفس السؤال → الفرق |
-| **checkpoint** | الـhybrid search شغال عند الكل |
-| 10 د | Reranker — وليه محتاجينه بعد الـfusion |
-| 15 د | الـprompt + citation enforcement + FastAPI `/ask` |
-| 5 د | `/health` بيرجّع `documents_indexed: N`، وPydantic بيرفض السؤال الفاضي (422) |
+| Time | Activity |
+|------|----------|
+| 10 min | Chunk per article → embed → Qdrant collection |
+| 15 min | **Hands-on:** dense search only. Ask about "Article 147" and inspect the results |
+| 15 min | Add BM25 + RRF → same question → compare |
+| **checkpoint** | Hybrid search works for everyone |
+| 10 min | Reranker — why it is needed after fusion |
+| 15 min | Prompt + citation enforcement + FastAPI `/ask` |
+| 5 min | `/health` returns `documents_indexed: N`; Pydantic rejects empty questions (422) |
 
-## أحلى لحظة في اليوم
+## The best moment of the day
 
-بعد الـcheckpoint: كل واحد يسأل سؤال قانوني بالعربي من دماغه ويشوف النظام بيرجّع رقم المادة الصح. سيبي 3 دقايق لده — ده اللي هيفضل في دماغهم من اليوم.
+After the checkpoint, everyone asks a legal question of their own in Arabic and watches the system return the correct article number. Give it three minutes — it is what people remember.
 
 ## Acceptance check
 
-- [ ] Qdrant collection فيها كل المواد، بـdense وbm25 vectors
-- [ ] `/ask` بيرد على سؤال عربي وسؤال إنجليزي
-- [ ] `sources` أرقام مواد
-- [ ] سؤال فاضي → 422 برسالة مقروءة مش stack trace
-- [ ] `/health` بيقول كم مستند مفهرس
+- [ ] The Qdrant collection holds every article with dense and BM25 vectors
+- [ ] `/ask` answers an Arabic question and an English question
+- [ ] `sources` contains article citations
+- [ ] An empty question returns 422 with a readable message, not a stack trace
+- [ ] `/health` reports how many documents are indexed
 
 ## Failure modes
 
-- **الـembedding model بيتحمّل في القاعة** → النت بتموت. الـPREWORK والـUSB stick هم الحل.
-- **حد بيستخدم موديل إنجليزي على نص عربي** ومالاحظش — النتيجة بتبقى معقولة شكلًا وغلط فعليًا. دي أحسن مدخل لـW3.
-- **الـlangdetect بيغلط على الأسئلة القصيرة** — ريبو عمر بيعمل `raise ValueError` على لغة غير مدعومة. نقطة مناقشة: ده صح ولا لازم fallback؟
+- **Embedding models downloading in the room** → the network dies. PREWORK and the USB stick are the fix.
+- **An English model used on Arabic text** without anyone noticing — results look plausible and are wrong. The perfect entry into W3.
+- **langdetect misreads short questions** — the reference repo raises `ValueError` on unsupported languages. Discussion: error or fallback?
 
-## اللي مش في الـworkshop ده
+## Out of scope
 
-query rewriting، multi-hop retrieval، agentic RAG. موجودين في ريبو عمر (`src/llm/query_rewriter.py`) — نشاور عليهم ونمشي.
+Query rewriting, multi-hop retrieval, agentic RAG. They exist in the reference repo (`src/llm/query_rewriter.py`); point to them and move on.

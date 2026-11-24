@@ -1,8 +1,8 @@
-# Pre-work — اعمل ده قبل اليوم
+# Pre-work — do this before the day
 
-> ⚠️ الورشة 7 ساعات، والـsetup بياكل ساعتين لو مش جاهز. **اللي مش معمول عنده الحاجات دي مش هيلحق اليوم.**
+> ⚠️ The workshop is 7 hours, and setup takes two of them if it is not done in advance. **Anyone who arrives without this done will not keep up.**
 
-## 1. تسطيب
+## 1. Install
 
 ```bash
 # Docker + compose
@@ -16,11 +16,11 @@ python --version          # 3.11+
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-على Windows: WSL2 لازم يكون version 2.
+On Windows: WSL must be version 2.
 
-## 2. اسحب الـimages من بدري
+## 2. Pull the images in advance
 
-ده أهم خطوة. اعملها على نت بيتك مش على نت القاعة:
+The most important step. Do it on your home connection, not the venue's:
 
 ```bash
 docker pull qdrant/qdrant
@@ -29,7 +29,7 @@ docker pull langfuse/langfuse:2
 docker pull postgres:16-alpine
 ```
 
-## 3. الـrepo والـdependencies
+## 3. Repository and dependencies
 
 ```bash
 git clone https://github.com/MLOpsMENACommunity/legal-rag-workshop-day.git
@@ -37,17 +37,17 @@ cd legal-rag-workshop-day
 uv sync
 ```
 
-## 4. الـembedding models
+## 4. Embedding models
 
-الموديلات بتتحمّل أول استخدام. حمّلها قبل:
+Models download on first use. Download them now:
 
 ```bash
 uv run python scripts/warm_cache.py
 ```
 
-## 5. API key للـLLM
+## 5. LLM API key
 
-محتاج key لواحد من دول، وتحطه في `.env`:
+You need a key for an LLM provider, set in `.env`:
 
 ```dotenv
 LLM_API_KEY=...
@@ -55,20 +55,20 @@ LLM_BASE_URL=...
 LLM_MODEL=...
 ```
 
-هنوفّر key مشترك للورشة لو مش معاك — بس لو معاك واحدة خاصة بيك أحسن (الـrate limit).
+A shared workshop key will be provided if you do not have one, but your own key is better (rate limits).
 
-## 6. تأكد إن كل حاجة شغالة
+## 6. Check everything works
 
 ```bash
 make check
 ```
 
-لازم يطلع **كله أخضر**. لو حاجة حمرا، اسأل في جروب الورشة **قبل** اليوم مش في اليوم.
+Everything must be **green**. If anything is red, ask in the workshop group **before** the day, not on the day.
 
 ---
 
-## حاجات هتحتاجها في اليوم
+## Bring on the day
 
-- لابتوب + الشاحن (مفيش prizes لحد بطاريته خلصت 2 الضهر)
-- حساب GitHub
-- الـPDF بتاع القانون المدني (موجود في `data/raw/` — DVC-tracked)
+- Laptop and charger
+- A GitHub account
+- The Civil Code PDF (in `data/raw/`, DVC-tracked)

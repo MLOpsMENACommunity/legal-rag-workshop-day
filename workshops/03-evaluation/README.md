@@ -1,59 +1,59 @@
-# Workshop 3 — Trust, but Measure
+# Workshop 3 — RAG Evaluation
 
-*Evaluating legal RAG*
+*RAGAS · golden sets · MLflow experiments*
 
-**60 دقيقة · 13:25 – 14:25** · [Slides](SLIDES.md)
+**60 minutes · 13:25 – 14:25** · [Slides](SLIDES.md)
 
-## الهدف
+## Goal
 
-نحوّل "النظام شكله شغال" لـ**رقم**. golden set + RAGAS + MLflow، وقرار مبني على الأرقام مش على الإحساس.
+Turn "it seems to work" into **numbers**: a golden set, RAGAS and MLflow, with decisions based on metrics rather than impressions.
 
-## الفكرة المركزية
+## Core idea
 
-بعد W2 الناس بتكون مبسوطة — النظام بيرد وبيستشهد. الـworkshop ده مهمته يوريهم إن **النظام اللي بنوه فيه مشاكل مش ملاحظة** — ومافيش طريقة تعرف غير إنك تقيس.
+After W2 people are happy — the system answers and cites. This workshop shows them **it has problems they have not noticed**, and the only way to find them is to measure.
 
-وأهم رسالة في اليوم كله: **مفيش metric عام للـLLMs.** نظام RAG قانوني له scorecard مختلف تمامًا عن chatbot أو summarizer.
+The key message of the day: **there is no universal LLM metric.** A legal RAG system needs a completely different scorecard from a chatbot or a summarizer.
 
 ## Evaluation vs Observability vs Guardrails
 
-الـworkshop ده بيبدأ بالـslide اللي بتفرّق بين التلاتة — Evaluation هو الامتحان قبل الـrelease، Observability هي الـdashcam بعده، والـGuardrails هي الفرامل جوه كل request. التفاصيل في الـ[README الرئيسي](../../README.md#evaluation-vs-observability-vs-guardrails).
+The workshop opens with the slide that separates the three: evaluation is the exam before release, observability is the dashcam after it, and guardrails are the brakes inside every request. Details in the [main README](../../README.md#evaluation-vs-observability-vs-guardrails).
 
-## الكود والداتا اللي هنشتغل عليها
+## Code and data
 
-ريبو عمر فيه **benchmark جاهز** ودي هدية:
+The reference repo ships a **ready benchmark**:
 
-| الملف | اللي فيه |
+| File | Contents |
 |------|----------|
-| `evaluation/data/civil_code_rag_qa_benchmark.json` | QA set جاهز على القانون المدني |
-| `evaluation/data/evaluation_results.csv` | نتائج run سابق |
-| `experiments/evaluation_retrivel.ipynb` | retrieval eval @ k=10، بـreranker وبدونه |
-| `experiments/evaluation_rag_response.ipynb` | response-level eval |
-| `evaluation/score_results*.jpg` | الـbefore/after بالصور |
+| `evaluation/data/civil_code_rag_qa_benchmark.json` | A QA set on the Civil Code |
+| `evaluation/data/evaluation_results.csv` | Results of a previous run |
+| `experiments/evaluation_retrivel.ipynb` | Retrieval eval @ k=10, with and without reranker |
+| `experiments/evaluation_rag_response.ipynb` | Response-level eval |
+| `evaluation/score_results*.jpg` | Before/after charts |
 
-إحنا هنعمل حاجة مهمة هنا: **ننقل الـeval من notebook لـmodule في الـrepo.** notebook مابينفعش يبقى CI gate.
+One important change: **we move evaluation from a notebook into a module in the repo.** A notebook cannot be a CI gate.
 
-## الـ 4 metrics بتاعة RAGAS
+## The four RAGAS metrics
 
-اشرحيهم بمثال فشل لكل واحدة — مش بالتعريف:
+Explain each through how it fails, not its definition:
 
-| Metric | بيقيس إيه | بيوقع إمتى |
-|--------|-----------|-------------|
-| **Faithfulness** | الإجابة مستندة على الـcontext؟ | الـLLM ألّف حكم مش في المادة — **أخطر واحد عندنا** |
-| **Answer relevancy** | الإجابة ردّت على السؤال؟ | جاب نص المادة بدل الإجابة |
-| **Context precision** | المواد المسترجعة علاقتها إيه؟ | 10 مواد واحدة بس مفيدة |
-| **Context recall** | جبنا كل المواد اللازمة؟ | الإجابة محتاجة 3 مواد وجبنا 1 |
+| Metric | Measures | Drops when |
+|--------|----------|------------|
+| **Faithfulness** | Is the answer grounded in the context? | The LLM invents a ruling not in the article — **the most dangerous failure here** |
+| **Answer relevancy** | Does it answer the question? | It pastes the article text instead of answering |
+| **Context precision** | Are retrieved articles relevant? | Ten articles retrieved, one useful |
+| **Context recall** | Did we retrieve everything needed? | The answer needs three articles and we found one |
 
-## الـbilingual ablation — أقوى حاجة في الـcorpus بتاعنا
+## Bilingual ablation — the corpus's biggest asset
 
-كل مادة موجودة بالعربي والإنجليزي. يعني نقدر **نسأل نفس السؤال باللغتين ونشوف هل الـretrieval بيرجّع نفس المادة**.
+Every article exists in Arabic and English, so we can **ask the same question in both languages and check that retrieval returns the same article**.
 
-ده test رخيص جدًا وبيكشف حاجة مافيش حد بيقيسها: **هل الـembedding model بتاعك بيفهم عربي فعلًا ولا بيمثّل أحرف؟**
+A cheap test that reveals something rarely measured: **does your embedding model understand Arabic, or does it just match characters?**
 
-ونقطة لازم تنقال: **الـmetrics المدرّبة على إنجليزي بتغلط على العربي.** الـLLM-as-judge لو بيحكم بالإنجليزي على إجابة عربية قانونية، الـbias بتاعه مش معروف.
+Also stress: **metrics and LLM judges trained on English can misjudge Arabic.** An English-centric judge scoring Arabic legal answers has unknown bias.
 
-## MLflow — الجزء اللي بيخلّيه MLOps
+## MLflow — the MLOps part
 
-الـchunking strategy هي أول experiment حقيقي:
+The chunking strategy is the first real experiment:
 
 ```python
 with mlflow.start_run():
@@ -63,42 +63,42 @@ with mlflow.start_run():
                         "context_precision": ..., "context_recall": ...})
 ```
 
-الـruns اللي هنعملها في القاعة (كل حد ياخد واحد، ونجمّع على الشاشة):
+Runs in the room (each table takes one, compared on screen):
 
-1. chunk بالمادة (baseline)
-2. chunk 512 token — عشان الفرق يبان بالرقم
-3. dense لوحده ضد hybrid
-4. بـreranker وبدونه
-5. top_k = 5 ضد 10 ضد 20
+1. Per-article chunks (baseline)
+2. 512-token chunks — so the difference shows in numbers
+3. Dense only vs hybrid
+4. With and without reranker
+5. top_k = 5 vs 10 vs 20
 
-أحسن حاجة في الترتيب ده: **الناس بتشوف بعينها إن القرارات اللي أخدناها في W1 وW2 كانت صح — بالرقم مش بكلامي.**
+The payoff: **participants see that the W1 and W2 decisions were right — by the numbers, not by assertion.**
 
-## التايم لاين
+## Timeline
 
-| الوقت | الجزء |
-|------|-------|
-| 10 د | ليه الـeyeballing مش evaluation + الفرق بين evaluation وobservability وguardrails |
-| 10 د | الـgolden set: الـbenchmark بتاع عمر + كل واحد يزود سؤالين |
-| 15 د | **Hands-on:** RAGAS على أول 20 سؤال |
-| **checkpoint** | كل واحد عنده 4 أرقام |
-| 10 د | الـbilingual ablation — نفس السؤال باللغتين |
-| 10 د | MLflow: كل حد يسجل run، ونقارن على الشاشة |
-| 5 د | نحدد الـthreshold: ليه 0.75 في الـCI وليه 0.80 في الـalert؟ |
+| Time | Activity |
+|------|----------|
+| 10 min | Why eyeballing is not evaluation + evaluation vs observability vs guardrails |
+| 10 min | The golden set: reference benchmark + two questions from each participant |
+| 15 min | **Hands-on:** RAGAS on the first 20 questions |
+| **checkpoint** | Everyone has four numbers |
+| 10 min | Bilingual ablation — the same question in both languages |
+| 10 min | MLflow: each table logs a run; compare on screen |
+| 5 min | Thresholds: why 0.75 in CI and 0.80 for alerts? |
 
 ## Acceptance check
 
-- [ ] golden set ≥ 20 سؤال، بالعربي والإنجليزي
-- [ ] الـ 4 metrics محسوبين ومسجّلين
-- [ ] ≥ 3 MLflow runs بـconfigs مختلفة
-- [ ] الـbilingual test معمول، والنتيجة مكتوبة في الـreport
-- [ ] الـeval بقى module في `src/` مش notebook
+- [ ] Golden set of ≥ 20 questions, Arabic and English
+- [ ] All four metrics computed and logged
+- [ ] ≥ 3 MLflow runs with different configurations
+- [ ] Bilingual test run and its result written in the report
+- [ ] Evaluation lives as a module in `src/`, not a notebook
 
 ## Failure modes
 
-- **RAGAS بتستهلك كوتة من الـAPI.** كل metric بتعمل LLM calls. 50 سؤال × 4 metrics = حساب كبير. **ابدأي بـ 20 سؤال في القاعة** والـ 50 تبقى take-home.
-- **حد هيشوف faithfulness = 0.95 ويبسط.** اسألي: الـcontext recall بقا كام؟ نظام بيرد من مادة واحدة من تلاتة بيبقى faithful وناقص في نفس الوقت.
-- **الـLLM-as-judge غالي وبطيء.** سيبي الـcalibration والـbias tests كـtake-home.
+- **RAGAS consumes API quota.** Every metric makes LLM calls; 50 questions × 4 metrics adds up. **Use 20 questions in the room**; the full 50 is take-home.
+- **Someone sees faithfulness = 0.95 and relaxes.** Ask about context recall: a system answering from one of three needed articles is faithful and incomplete at the same time.
+- **LLM-as-judge is slow and expensive.** Leave calibration and bias tests as take-home.
 
-## اللي مش في الـworkshop ده
+## Out of scope
 
-LLM-judge calibration، position/verbosity bias tests، human annotation protocols.
+LLM-judge calibration, position/verbosity bias tests, human annotation protocols.

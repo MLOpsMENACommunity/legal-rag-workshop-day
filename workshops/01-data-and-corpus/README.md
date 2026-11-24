@@ -1,44 +1,42 @@
-# Workshop 1 — Taming the PDF
+# Workshop 1 — Arabic Corpus Engineering
 
-*Data & corpus engineering*
+*PDF parsing · normalization · validation*
 
-**70 دقيقة · 10:20 – 11:30** · [Slides](SLIDES.md)
+**70 minutes · 10:20 – 11:30** · [Slides](SLIDES.md)
 
-## الهدف
+## Goal
 
-نحوّل PDF القانون المدني المصري (bilingual، عمودين) لـ`articles.json` — **record لكل مادة**، معاه الهيراركية والـcitation، ومعموله validation.
+Turn the bilingual, two-column Egyptian Civil Code PDF into `articles.json` — **one record per article**, with its hierarchy and citation, validated by tests.
 
-## ليه دي أهم workshop في اليوم
+## Why this is the most important workshop of the day
 
-الناس بتيجي للـRAG عايزة تشتغل على embeddings وvector DBs. واقعيًا **أغلب فشل الـRAG العربي بيحصل هنا** — في الـparsing. parsing bug ساكت بيبقى hallucination بعد 3 خطوات، ووقتها هتلوم الموديل.
+People come to RAG wanting to work on embeddings and vector databases. In practice, **most Arabic RAG failures happen here**, in parsing. A silent parsing bug becomes a hallucination three steps later, and the model gets the blame.
 
-الرسالة اللي لازم توصل: **الـPDF مش الـcorpus. الـPDF هو الـraw input.**
+The message to land: **the PDF is not your corpus — it is your raw input.**
 
-## الكود اللي هنشرحه
+## Code we walk through
 
-`src/parsing/pdf_parser.py` من [ريبو عمر](https://github.com/OmarFarghaly/ArabicLegalDocumentProject/blob/main/src/parsing/pdf_parser.py) — 400 سطر، وكل قرار فيه له سبب.
+`src/parsing/pdf_parser.py` from the [reference repo](https://github.com/OmarFarghaly/ArabicLegalDocumentProject/blob/main/src/parsing/pdf_parser.py) — around 400 lines, every decision deliberate.
 
-الـfunctions اللي هنقف عندها:
+| Function | Concept it teaches |
+|----------|--------------------|
+| `extract_word_lines()` | Separating Arabic/English columns by coordinates, not by text dump |
+| `scalar_pos()` | Page + y → one number, so the whole document can be ordered |
+| `extract_bold_english_lines()` | Bold text as a heading signal, instead of regex on content |
+| `build_context_timeline()` | Tracking Part/Book/Chapter/Section while scanning |
+| `find_articles()` | `Article 451` (a heading) vs `Article 444.` (a reference in text) |
+| `find_repealed_ranges()` | Repealed articles — flag, never delete |
+| `strip_arabic_article_label()` | Removing the leading Arabic article label |
 
-| Function | الفكرة اللي بيشرحها |
-|----------|---------------------|
-| `extract_word_lines()` | إزاي تفصل عمودين عربي/إنجليزي — بالـcoordinates مش بالـtext dump |
-| `scalar_pos()` | تريك حلو: page + y → رقم واحد، عشان تقدر ترتّب المستند كله |
-| `extract_bold_english_lines()` | الـbold كـsignal للـheadings — مش regex على النص |
-| `build_context_timeline()` | إزاي تحتفظ بـPart/Book/Chapter/Section وهي ماشية |
-| `find_articles()` | الفرق بين `Article 451` (عنوان) و `Article 444.` (إشارة جوه نص) |
-| `find_repealed_ranges()` | المواد الملغية — flag مش delete |
-| `strip_arabic_article_label()` | تنظيف الـ"مادة (١٤٧)" من أول النص |
-
-لاحظي في الـsort بتاع `arabic_lines`:
+Note the sort key on `arabic_lines`:
 
 ```python
-key=lambda l: (l.page, round(l.y0, 1), -l.x0)   # الـ -x0 دي هي الـRTL
+key=lambda l: (l.page, round(l.y0, 1), -l.x0)   # -x0 is the RTL fix
 ```
 
-دي أحلى نقطة في الـparser كله — سطر واحد بيحل مشكلة الـright-to-left.
+This is the nicest line in the parser: one minus sign solves right-to-left ordering.
 
-## الـschema المستهدف
+## Target schema
 
 ```json
 {
@@ -55,59 +53,59 @@ key=lambda l: (l.page, round(l.y0, 1), -l.x0)   # الـ -x0 دي هي الـRTL
 }
 ```
 
-> نقطة تدريسية: ريبو عمر بيسمّيها `ar_text` والـhandbook بيقول `text_ar`. اختلاف بسيط بس بيكسر أي حد بيبني فوقيك. اتكلمي دقيقة عن ليه الـschema لازم تكون contract مكتوب، مش اتفاق ضمني.
+> Teaching point: the reference repo writes `ar_text`; the handbook specifies `text_ar`. A small mismatch, but it breaks anyone building on top. Spend a minute on why a schema must be a written contract, not an assumption.
 
-## التحديات الحقيقية في الداتا العربية
+## Real challenges in Arabic legal data
 
-دي قلب الـworkshop. كل واحدة فيها هنوري الـbefore/after على مادة حقيقية:
+The core of the workshop. Show a before/after on a real article for each:
 
-1. **الـtwo-column layout بيتداخل** — `pdftotext` بيخرّج عربي وإنجليزي متلخبطين نص الجملة
-2. **RTL والـglyphs** — النص بيرجع معكوس أو الحروف مقطعة
-3. **الأرقام العربية** — ١٤٧ → 147، لازم integer تقدر تعمل عليه sort وrange query
-4. **المواد الملغية** — المواد 54–80 ملغية. "المادة دي ملغية" دي إجابة **صح** ومفيدة. النظام اللي بيشيلها بيهلوس حول الفراغ
-5. **الـheadings بتحمل الهيراركية** — اخدها في نفس الـpass، أرخص بكتير من re-parsing
-6. **التشكيل والهمزات والألفات** — نفس الكلمة بتبقى tokenين مختلفين لو مانعملتش normalization موحّد
+1. **Two-column layouts interleave** — `pdftotext` mixes Arabic and English mid-sentence
+2. **RTL and glyph issues** — text comes back reversed or with broken letters
+3. **Arabic-Indic numerals** — ١٤٧ → 147, stored as an integer you can sort and range-query
+4. **Repealed articles** — articles 54–80 are repealed. "This article was repealed" is a correct, useful answer; a system that drops them hallucinates around the gap
+5. **Hierarchy lives in headings** — capture it in the same pass; far cheaper than re-parsing
+6. **Diacritics, hamza and alef forms** — the same word becomes different tokens without consistent normalization
 
-## التايم لاين
+## Timeline
 
-| الوقت | الجزء |
-|------|-------|
-| 10 د | الـPDF على الشاشة. `pdftotext` لأول صفحتين → الناس تشوف الكارثة بعينها |
-| 15 د | الـcoordinate-based extraction وليه هي الحل (`extract_word_lines`) |
-| 10 د | الـcontext timeline — إزاي تعرف المادة 147 تابعة لأي باب |
-| **checkpoint** | كل واحد عنده `articles.json` فيه 1000+ record |
-| 15 د | **Hands-on:** الـvalidation test — دي الناس تكتبها بنفسها |
-| 10 د | Chunking بالمادة مش بالـtoken count — وليه 512-token window بيقتل الـcitation |
-| 10 د | DVC: `dvc add` للـPDF والـJSON + `dvc.yaml` stage |
+| Time | Activity |
+|------|----------|
+| 10 min | The PDF on screen; `pdftotext` on two pages so the room sees the mess |
+| 15 min | Coordinate-based extraction and why it works (`extract_word_lines`) |
+| 10 min | The context timeline — how article 147 knows its chapter |
+| **checkpoint** | Everyone has `articles.json` with 1000+ records |
+| 15 min | **Hands-on:** validation tests, written by participants |
+| 10 min | Chunking by article, not token count — why 512-token windows destroy citations |
+| 10 min | DVC: `dvc add` for the PDF and JSON + a `dvc.yaml` stage |
 
-## الـhands-on بتاع الـworkshop ده
+## Hands-on
 
-الناس تكتب `tests/test_corpus.py` بنفسها. أربع assertions:
+Participants write `tests/test_corpus.py` themselves, with four assertions:
 
 ```python
 def test_article_numbers_contiguous(articles): ...
 def test_every_record_has_arabic_text(articles): ...
-def test_no_record_is_absurdly_long(articles): ...   # record عملاق = split فشل
+def test_no_record_is_absurdly_long(articles): ...   # a giant record = a failed split
 def test_repealed_articles_are_flagged(articles): ...  # 54–80
 ```
 
-دي أحسن حاجة يعملوها بإيديهم في الـworkshop ده — سريعة، وبتكشف bugs حقيقية عندهم فورًا.
+Quick to write, and it surfaces real bugs immediately.
 
 ## Acceptance check
 
-- [ ] `articles.json` موجود، record لكل مادة
-- [ ] `article_number` أرقام إنجليزية integer
-- [ ] 20 مادة راندوم اتفحصو بالعين — العربي مقروء ومش معكوس
-- [ ] المواد الملغية `is_repealed: true`
-- [ ] الـ 4 tests passing
-- [ ] `dvc status` clean
+- [ ] `articles.json` exists, one record per article
+- [ ] `article_number` is an integer in Western digits
+- [ ] 20 random articles checked by eye — Arabic reads correctly, not reversed
+- [ ] Repealed articles have `is_repealed: true`
+- [ ] All 4 tests pass
+- [ ] `dvc status` is clean
 
 ## Failure modes
 
-- **حد هيستعجل ويبدأ embedding من غير validation.** اوقفيه.
-- **حد هيسأل "مانستخدمش LLM يعمل الـparsing ليه؟"** سؤال عاقل — الرد: غالي، وغير deterministic، ومش بتعرف تجيبلك نفس النتيجة مرتين. بس سيبي مساحة: hybrid (regex + LLM للحالات الشاذة) قرار محترم.
-- **الـ PyMuPDF مش بيتسطّب** — مشكلة شائعة على ماك M1/M2. الـPREWORK بيحلها.
+- **Someone rushes to embeddings without validation.** Stop them.
+- **"Why not have an LLM do the parsing?"** A fair question. Answer: expensive, non-deterministic, and not reproducible. Leave room: a hybrid (rules plus an LLM for edge cases) is a respectable design.
+- **PyMuPDF fails to install** — common on Apple Silicon. PREWORK covers it.
 
-## اللي مش في الـworkshop ده
+## Out of scope
 
-OCR، scanned PDFs، table extraction. الـPDF بتاعنا text-based وده مقصود.
+OCR, scanned PDFs, table extraction. Our PDF is text-based by design.

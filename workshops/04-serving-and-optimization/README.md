@@ -1,43 +1,41 @@
-# Workshop 4 — From Laptop to Load
+# Workshop 4 — Serving & Performance Optimization
 
-*Serving & optimization*
+*Docker Compose · load testing · caching*
 
-**60 دقيقة · 14:25 – 15:25** · [Slides](SLIDES.md)
+**60 minutes · 14:25 – 15:25** · [Slides](SLIDES.md)
 
-## الهدف
+## Goal
 
-النظام يبقى service حد تاني يقدر يشغّله بتلات أوامر، ونعرف بيقع عند كام مستخدم.
+The system becomes a service someone else can run in three commands, and we know at how many users it breaks.
 
-## الفكرة المركزية
+## Core idea
 
-في الـRAG، الـlatency مش رقم واحد — دي سلسلة: embed → retrieve → rerank → generate. والـ**bottleneck مش دايمًا الـLLM**. مش هتعرف منين إلا لما تقيس.
+In RAG, latency is not one number — it is a chain: embed → retrieve → rerank → generate. **The bottleneck is not always the LLM**, and you only find it by measuring.
 
-## الكود اللي هنشرحه
+## Code we walk through
 
-| الملف | اللي بيشرحه |
-|------|-------------|
-| `docker-compose.yaml` | service dependencies وhealthchecks حقيقية |
-| `docker/index_if_changed.py` | ليه الـindexing لازم يبقى idempotent |
-| `src/cache/` | semantic cache — أرخص optimization في الـRAG كله |
-| `Dockerfile` | multi-stage، non-root |
+| File | What it teaches |
+|------|-----------------|
+| `docker-compose.yaml` | Real service dependencies and healthchecks |
+| `docker/index_if_changed.py` | Why indexing must be idempotent |
+| `src/cache/` | Semantic cache — the cheapest optimization in RAG |
+| `Dockerfile` | Multi-stage, non-root |
 
-### الـcompose — نقطتين تدريسيتين جميلين
-
-ريبو عمر فيه حاجتين محترمين نقف عندهم:
+### Two teaching points in the compose file
 
 ```yaml
 depends_on:
   indexer:
-    condition: service_completed_successfully   # مش service_started
+    condition: service_completed_successfully   # not service_started
 ```
 
-الفرق بين `service_started` و `service_completed_successfully` هو الفرق بين service بيرد على فهرس فاضي وservice بيستنى الفهرسة تخلص.
+The difference between `service_started` and `service_completed_successfully` is the difference between a service answering from an empty index and one that waits for indexing to finish.
 
-والـhealthcheck بتاع Qdrant — bash بيفتح TCP socket بالإيد (`exec 3<>/dev/tcp/...`) عشان مافيش curl جوه الـimage. تريك يستاهل دقيقة.
+Also the Qdrant healthcheck: bash opens a TCP socket by hand (`exec 3<>/dev/tcp/...`) because the image has no curl. Worth a minute.
 
-### التعديل اللي هنعمله
+### The change we make
 
-الـcompose الأصلي فيه:
+The original compose file contains:
 
 ```yaml
 vllm:
@@ -45,51 +43,51 @@ vllm:
   gpus: all
 ```
 
-**ده مستحيل في القاعة.** هنشيل الـservice ده ونحط `LLM_BASE_URL` على API برّا.
+**Impossible in the room.** We remove this service and point `LLM_BASE_URL` at an external API.
 
-ودي في نفسها أحسن درس في الـworkshop: **الـLLM لازم يكون ورا interface**. لو الكود بتاعك متشكل على vLLM، مش هتقدر تغيره. ريبو عمر عامل ده صح — `src/llm/base.py` + `factory.py` + `vllm_client.py`.
+This is itself the best lesson of the workshop: **the LLM must sit behind an interface.** Code hard-wired to vLLM cannot be switched. The reference repo does this right — `src/llm/base.py` + `factory.py` + `vllm_client.py`.
 
-## Optimization — بالترتيب الصح
+## Optimization — in the right order
 
-الناس بتروح على quantization علطول. ده أغلى حاجة وأقلهم مردود. الترتيب العقلاني:
+People jump straight to quantization: the most expensive option with the least certain return. The sensible order:
 
-| # | التحسين | التكلفة | المردود |
-|---|---------|---------|---------|
-| 1 | **Semantic cache** | ساعة شغل | ضخم — الأسئلة القانونية بتتكرر جدًا |
-| 2 | **قلّل top_k** | 5 دقايق | كبير — context أقل = tokens أقل = أسرع وأرخص |
-| 3 | **reranker أصغر** | ساعة | متوسط |
-| 4 | **AWQ-4bit** | يوم + GPU | متوسط — ومخاطرة على الـfaithfulness |
+| # | Change | Cost | Return |
+|---|--------|------|--------|
+| 1 | **Semantic cache** | An hour | Large — legal questions repeat a lot |
+| 2 | **Lower top_k** | Five minutes | Large — less context, fewer tokens, faster and cheaper |
+| 3 | **Smaller reranker** | An hour | Moderate |
+| 4 | **AWQ 4-bit** | A day + a GPU | Moderate — with a risk to faithfulness |
 
-الـ 1 و 2 هنعملهم hands-on. الـ 4 demo على الشاشة بأرقام جاهزة من ريبو عمر.
+1 and 2 are hands-on. 4 is an on-screen demo with numbers prepared in advance.
 
-**القاعدة اللي لازم تتقال:** أي optimization لازم يتقاس بـ**RAGAS before/after** مش بالـlatency بس. نظام أسرع وبيهلوس أكتر مش تحسين.
+**The rule to land:** every optimization is measured with **RAGAS before/after**, not latency alone. A faster system that hallucinates more is not an improvement.
 
-## التايم لاين
+## Timeline
 
-| الوقت | الجزء |
-|------|-------|
-| 10 د | `docker compose up` — الـdependency graph والـhealthchecks |
-| 10 د | Streaming `/ask` — وليه الـperceived latency أهم من الـtotal |
-| 15 د | **Hands-on:** Locust على 10 ثم 50 user → اكتب الـp95 |
-| **checkpoint** | كل واحد عنده رقم p95 |
-| 10 د | فعّل الـsemantic cache → نفس الـLocust → الفرق |
-| 10 د | الـcost model: دولار لكل 1000 سؤال، قبل وبعد |
-| 5 د | Demo: AWQ-4bit وأرقامها |
+| Time | Activity |
+|------|----------|
+| 10 min | `docker compose up` — dependency graph and healthchecks |
+| 10 min | Streaming `/ask` — why perceived latency matters more than total |
+| 15 min | **Hands-on:** Locust at 10 then 50 users → record p95 |
+| **checkpoint** | Everyone has a p95 number |
+| 10 min | Enable the semantic cache → same Locust run → compare |
+| 10 min | Cost model: dollars per 1,000 questions, before and after |
+| 5 min | Demo: AWQ 4-bit and its numbers |
 
 ## Acceptance check
 
-- [ ] `docker compose up` والـservice شغال على لابتوب الزميل
-- [ ] README بتلات أوامر
-- [ ] Locust report في `reports/`، والـp95 مكتوب
-- [ ] الـcache شغال — نفس السؤال تاني أسرع بشكل واضح
-- [ ] الـcost per 1000 questions محسوب
+- [ ] `docker compose up` runs the service on a colleague's laptop
+- [ ] README with three commands
+- [ ] Locust report in `reports/` with p95 recorded
+- [ ] The cache works — a repeated question is clearly faster
+- [ ] Cost per 1,000 questions calculated
 
 ## Failure modes
 
-- **الـLocust هيحرق الـAPI quota.** استخدمي mock LLM للـload test أو cached responses — الـload test بيقيس الـserving layer مش الـLLM.
-- **الـcache بيجيب إجابة لسؤال مختلف.** مشكلة حقيقية — الـthreshold بتاع الـsimilarity حساس جدًا. سؤال عن المادة 147 وسؤال عن 148 قريبين جدًا semantically. **دي أحلى مناقشة في الـworkshop ده.**
-- **الـdocker build بياخد 10 دقايق.** لازم يكون معمول في الـPREWORK.
+- **Locust burns the API quota.** Use a mock LLM or cached responses — the load test measures the serving layer, not the LLM.
+- **The cache returns an answer for a different question.** A real problem: the similarity threshold is sensitive. Questions about Article 147 and Article 148 are very close semantically. **The best discussion of this workshop.**
+- **Docker build takes 10 minutes.** It must be done in PREWORK.
 
-## اللي مش في الـworkshop ده
+## Out of scope
 
-vLLM internals (KV cache، preemptions، continuous batching)، canary rollout، distillation، Kubernetes.
+vLLM internals (KV cache, preemption, continuous batching), canary rollouts, distillation, Kubernetes.
