@@ -1,0 +1,1201 @@
+<!--HEAD-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!--/HEAD-->
+<title>RAG Evaluation Workshop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans+Arabic:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a fixed 1600x900 stage scaled to the window, like a projector slide; engineering-notebook paper so the Excalidraw ink sits at home. */
+@font-face { font-family: "Excalifont"; src: url(data:font/woff2;base64,{{FONT_EXCALIFONT}}) format("woff2"); font-display: block; }
+:root {
+  --paper: #fafbfd; --paper-2: #eef2f8; --ink: #1b2230; --muted: #5d6779; --line: #d3d9e4;
+  --accent: #1971c2; --accent-soft: #dcebfb; --mark: #ffe08a;
+  --good: #2b8a3e; --good-soft: #d3f9d8; --bad: #d6336c; --bad-soft: #ffe3ea; --warn: #e8590c; --warn-soft: #fff0e0;
+  --violet: #6741d9; --violet-soft: #ece6ff; --code-bg: #f3f5f9; --dot: #dfe4ee;
+  --tok-kw: #6741d9; --tok-str: #2b8a3e; --tok-com: #7b8494; --tok-num: #c2255c; --tok-fn: #1864ab; --tok-dec: #d9480f;
+  --diagram-filter: none;
+  --f-hand: "Excalifont", "Segoe Print", "Comic Sans MS", cursive;
+  --f-body: "IBM Plex Sans", "IBM Plex Sans Arabic", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --f-ar: "IBM Plex Sans Arabic", "Geeza Pro", "Segoe UI", Tahoma, sans-serif;
+  --f-code: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #14171d; --paper-2: #1c212b; --ink: #e6e9ef; --muted: #9aa3b3; --line: #2e3542;
+  --accent: #74b0f0; --accent-soft: #1b2b42; --mark: #6e5a10;
+  --good: #69db7c; --good-soft: #17301d; --bad: #ff8fab; --bad-soft: #3a1823; --warn: #ffa94d; --warn-soft: #3a2614;
+  --violet: #b197fc; --violet-soft: #2a2245; --code-bg: #1a1f28; --dot: #232936;
+  --tok-kw: #b197fc; --tok-str: #8ce99a; --tok-com: #7d8696; --tok-num: #faa2c1; --tok-fn: #74c0fc; --tok-dec: #ffa94d;
+  --diagram-filter: invert(0.9) hue-rotate(180deg) saturate(1.3);
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --paper: #14171d; --paper-2: #1c212b; --ink: #e6e9ef; --muted: #9aa3b3; --line: #2e3542;
+  --accent: #74b0f0; --accent-soft: #1b2b42; --mark: #6e5a10;
+  --good: #69db7c; --good-soft: #17301d; --bad: #ff8fab; --bad-soft: #3a1823; --warn: #ffa94d; --warn-soft: #3a2614;
+  --violet: #b197fc; --violet-soft: #2a2245; --code-bg: #1a1f28; --dot: #232936;
+  --tok-kw: #b197fc; --tok-str: #8ce99a; --tok-com: #7d8696; --tok-num: #faa2c1; --tok-fn: #74c0fc; --tok-dec: #ffa94d;
+  --diagram-filter: invert(0.9) hue-rotate(180deg) saturate(1.3);
+  color-scheme: dark; }
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--paper-2); color: var(--ink); font-family: var(--f-body); overflow: hidden;
+  padding-left: max(0px, env(safe-area-inset-left, 0px)); padding-right: max(0px, env(safe-area-inset-right, 0px)); }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.viewport { position: fixed; inset: 0; display: grid; place-items: center; }
+.stage { width: 1600px; height: 900px; position: relative; flex: none; transform-origin: center center;
+  background-color: var(--paper);
+  background-image: radial-gradient(var(--dot) 1.2px, transparent 1.3px); background-size: 28px 28px;
+  box-shadow: 0 10px 40px rgba(20, 30, 50, .12); overflow: hidden; }
+
+/* ---------- slide chrome ---------- */
+.slide { position: absolute; inset: 0; padding: 56px 84px 70px; display: none; flex-direction: column; gap: 22px; }
+.slide.active { display: flex; }
+.kicker { font: 600 15px/1 var(--f-body); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); display: flex; gap: 14px; align-items: center; }
+.kicker .mins { color: var(--muted); letter-spacing: .06em; font-weight: 500; }
+h1, h2, h3 { font-family: var(--f-hand); font-weight: 400; margin: 0; text-wrap: balance; letter-spacing: .005em; }
+h1 { font-size: 104px; line-height: 1.02; }
+h2 { font-size: 56px; line-height: 1.1; }
+h3 { font-size: 30px; line-height: 1.2; }
+p, li { font-size: 27px; line-height: 1.45; margin: 0; }
+.lede { font-size: 30px; line-height: 1.4; color: var(--muted); max-width: 62ch; }
+.small { font-size: 21px; color: var(--muted); }
+mark { background: linear-gradient(100deg, transparent 0 2%, var(--mark) 3% 97%, transparent 98%); color: inherit; padding: 0 .18em; border-radius: 3px; }
+code, .mono { font-family: var(--f-code); font-size: .86em; }
+p code, li code, td code { background: var(--code-bg); padding: .08em .35em; border-radius: 5px; border: 1px solid var(--line); }
+[lang="ar"], .ar { font-family: var(--f-ar); direction: rtl; unicode-bidi: isolate; }
+.grow { flex: 1; min-height: 0; }
+.row { display: flex; gap: 28px; align-items: stretch; }
+.cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; }
+.cols-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; }
+.center { display: grid; place-items: center; }
+.sketch { border: 2px solid var(--ink); border-radius: 14px 18px 13px 17px / 16px 13px 18px 14px; background: var(--paper); }
+.card { padding: 22px 26px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.card h3 { font-size: 32px; }
+.card p, .card li { font-size: 23px; }
+.tag { display: inline-flex; align-items: center; gap: 6px; font: 600 14px/1 var(--f-body); letter-spacing: .06em; text-transform: uppercase; padding: 6px 10px; border-radius: 999px; border: 1.5px solid currentColor; width: fit-content; }
+.t-good { color: var(--good); } .t-bad { color: var(--bad); } .t-warn { color: var(--warn); } .t-acc { color: var(--accent); } .t-vio { color: var(--violet); } .t-mut { color: var(--muted); }
+ul.clean { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+ul.clean li { padding-left: 30px; position: relative; }
+ul.clean li::before { content: ""; position: absolute; left: 4px; top: .55em; width: 13px; height: 13px; border: 2px solid var(--accent); border-radius: 50% 45% 55% 48%; }
+.diagram { display: grid; place-items: center; min-height: 0; }
+.diagram svg { width: 100%; height: 100%; max-height: 100%; filter: var(--diagram-filter); }
+.frag { transition: opacity .3s ease, transform .3s ease; }
+.frag:not(.shown) { opacity: 0; transform: translateY(8px); pointer-events: none; }
+.callout { border-left: 5px solid var(--accent); padding: 14px 20px; background: var(--accent-soft); border-radius: 0 10px 10px 0; font-size: 25px; }
+.callout.bad { border-color: var(--bad); background: var(--bad-soft); }
+.callout.good { border-color: var(--good); background: var(--good-soft); }
+.callout.warn { border-color: var(--warn); background: var(--warn-soft); }
+
+table.tbl { border-collapse: collapse; width: 100%; font-size: 24px; }
+.tbl th, .tbl td { text-align: left; padding: 15px 16px; border-bottom: 1.5px solid var(--line); vertical-align: top; }
+.tbl th { font: 600 16px/1.2 var(--f-body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.tbl td.num, .tbl th.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--f-code); font-size: 18px; }
+
+/* ---------- global UI ---------- */
+.hud { position: fixed; z-index: 20; display: flex; gap: 8px; align-items: center; font: 500 14px/1 var(--f-body); }
+.hud-tl { top: calc(10px + env(safe-area-inset-top, 0px)); left: max(12px, env(safe-area-inset-left, 0px)); }
+.hud-br { bottom: calc(10px + env(safe-area-inset-bottom, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); }
+.hud button, .hud .pill { background: var(--paper); border: 1.5px solid var(--line); border-radius: 999px; padding: 8px 13px; cursor: pointer; color: var(--ink); }
+.hud button:hover { border-color: var(--accent); }
+.pill.timer { font-family: var(--f-code); font-variant-numeric: tabular-nums; cursor: pointer; }
+.pill.timer.late { border-color: var(--bad); color: var(--bad); }
+.pill.timer.early { border-color: var(--good); color: var(--good); }
+.progress { position: absolute; left: 0; bottom: 0; height: 5px; background: var(--accent); transition: width .3s; }
+.footer { position: absolute; left: 84px; right: 84px; bottom: 24px; display: flex; justify-content: space-between; font: 500 14px/1 var(--f-body); color: var(--muted); letter-spacing: .04em; }
+.notes-drawer { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(56px + env(safe-area-inset-bottom, 0px)); width: min(920px, calc(100vw - 32px)); max-height: 42vh; overflow: auto; z-index: 25;
+  background: var(--paper); border: 2px solid var(--ink); border-radius: 14px; padding: 18px 22px; box-shadow: 0 12px 40px rgba(0,0,0,.25); font-size: 17px; line-height: 1.5; }
+.notes-drawer h4 { margin: 0 0 8px; font: 600 13px/1 var(--f-body); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+.notes-drawer ul { margin: 0; padding-left: 20px; } .notes-drawer li { font-size: 17px; margin: 4px 0; }
+aside.notes { display: none; }
+.overview { position: fixed; inset: 0; z-index: 30; background: color-mix(in srgb, var(--paper-2) 94%, transparent); overflow: auto;
+  padding: calc(60px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 40px max(16px, env(safe-area-inset-left, 0px)); }
+.overview-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.overview button { text-align: left; background: var(--paper); border: 1.5px solid var(--line); border-radius: 12px; padding: 14px; cursor: pointer; display: grid; gap: 6px; }
+.overview button.cur { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.overview .o-num { font: 600 12px/1 var(--f-body); color: var(--accent); letter-spacing: .1em; text-transform: uppercase; }
+.overview .o-title { font: 400 22px/1.15 var(--f-hand); }
+.help { position: fixed; z-index: 31; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--paper); border: 2px solid var(--ink); border-radius: 16px; padding: 22px 28px; width: min(520px, calc(100vw - 32px)); }
+.help table { width: 100%; font-size: 16px; border-collapse: collapse; } .help td { padding: 5px 4px; } .help kbd { font-family: var(--f-code); background: var(--code-bg); border: 1px solid var(--line); border-radius: 5px; padding: 2px 7px; }
+
+/* ---------- title slide ---------- */
+.title-wrap { display: grid; grid-template-columns: 1.15fr .85fr; gap: 30px; align-items: center; height: 100%; }
+.title-wrap .meta { display: flex; gap: 22px; flex-wrap: wrap; font-size: 20px; color: var(--muted); }
+.title-wrap .meta b { color: var(--ink); font-weight: 600; }
+.big-num { font: 400 150px/1 var(--f-hand); color: var(--accent); }
+
+/* ---------- eyeball test ---------- */
+.qa { padding: 20px 22px; display: grid; gap: 12px; align-content: start; }
+.qa .q { font-size: 26px; font-weight: 600; line-height: 1.35; }
+.qa .a { font-size: 25px; line-height: 1.4; background: var(--code-bg); border-radius: 10px; padding: 12px 14px; }
+.qa .verdict { font-size: 23px; line-height: 1.4; border-top: 1.5px dashed var(--line); padding-top: 12px; display: grid; gap: 6px; }
+.stamp { font: 400 34px/1 var(--f-hand); color: var(--good); transform: rotate(-4deg); width: fit-content; border: 2.5px solid currentColor; padding: 4px 12px; border-radius: 8px; }
+.stamp.bad { color: var(--bad); }
+
+/* ---------- code explorer ---------- */
+.cx { display: grid; grid-template-columns: 250px minmax(0, 1fr) 390px; gap: 18px; min-height: 0; height: 100%; }
+.cx.no-tree { grid-template-columns: minmax(0, 1fr) 440px; }
+.cx.no-tree .cx-code pre { font-size: 20px; line-height: 1.7; padding-top: 22px; }
+.cx-tree { display: flex; flex-direction: column; gap: 4px; overflow: auto; padding-right: 4px; }
+.cx-tree .dir { font: 600 15px/1 var(--f-code); color: var(--muted); padding: 6px 4px 8px; }
+.cx-tree button { text-align: left; border: 1.5px solid transparent; background: none; border-radius: 9px; padding: 8px 10px; cursor: pointer; display: grid; gap: 3px; }
+.cx-tree button .fn { font: 500 16px/1.2 var(--f-code); }
+.cx-tree button .ft { font: 500 12.5px/1.2 var(--f-body); color: var(--muted); letter-spacing: .03em; }
+.cx-tree button:hover { border-color: var(--line); background: var(--paper); }
+.cx-tree button.on { border-color: var(--accent); background: var(--accent-soft); }
+.cx-code { background: var(--code-bg); border: 1.5px solid var(--line); border-radius: 12px; overflow: auto; min-height: 0; position: relative; }
+.cx-code pre { margin: 0; padding: 14px 0; font: 15.5px/1.6 var(--f-code); tab-size: 4; }
+.cx-code bdi { unicode-bidi: isolate; direction: rtl; font-family: var(--f-ar); }
+.cx-code .ln { display: flex; padding-right: 16px; white-space: pre; }
+.cx-code .ln > .no { width: 52px; flex: none; text-align: right; padding-right: 14px; color: var(--muted); opacity: .6; user-select: none; }
+.cx-code .ln > .src { flex: 1; }
+.cx-code .ln.ann { cursor: pointer; }
+.cx-code .ln.ann > .no { opacity: 1; color: var(--accent); }
+.cx-code .ln.ann.first > .no { font-weight: 700; }
+.cx-code .ln.hover { background: color-mix(in srgb, var(--accent-soft) 70%, transparent); }
+.cx-code .ln.sel { background: var(--accent-soft); box-shadow: inset 4px 0 0 var(--accent); }
+.cx-code.dim .ln:not(.sel) .src { opacity: .45; }
+.badge { display: inline-grid; place-items: center; min-width: 22px; height: 22px; border-radius: 11px; background: var(--accent); color: var(--paper); font: 700 12px/1 var(--f-body); margin-left: 10px; vertical-align: 2px; padding: 0 6px; }
+.tok-kw { color: var(--tok-kw); font-weight: 600; } .tok-str { color: var(--tok-str); } .tok-com { color: var(--tok-com); font-style: italic; }
+.tok-num { color: var(--tok-num); } .tok-fn { color: var(--tok-fn); font-weight: 600; } .tok-dec { color: var(--tok-dec); } .tok-key { color: var(--tok-fn); }
+.cx-panel { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+.cx-panel .sum { font-size: 19px; color: var(--muted); line-height: 1.45; }
+.cx-panel .detail { padding: 18px 20px; display: grid; gap: 10px; align-content: start; overflow: auto; min-height: 0; }
+.cx-panel .detail h3 { font-size: 30px; }
+.cx-panel .detail p { font-size: 21px; line-height: 1.5; }
+.cx-panel .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.cx-panel .chips button { border: 1.5px solid var(--line); background: var(--paper); border-radius: 999px; padding: 7px 12px; cursor: pointer; font-size: 15px; }
+.cx-panel .chips button.on { border-color: var(--accent); background: var(--accent-soft); }
+.cx-panel .nav { display: flex; gap: 8px; }
+.cx-panel .nav button { flex: 1; border: 1.5px solid var(--ink); background: var(--paper); border-radius: 10px; padding: 9px; cursor: pointer; font-weight: 600; font-size: 15px; }
+.hint { font-size: 15px; color: var(--muted); }
+
+/* ---------- retrieval playground ---------- */
+.rp { display: grid; grid-template-columns: 1fr 1.05fr; gap: 34px; min-height: 0; }
+.rp-list { display: grid; gap: 7px; align-content: start; }
+.rp-item { display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 12px; padding: 7px 14px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--paper); cursor: pointer; text-align: left; font-size: 20px; }
+.rp-item .rk { font: 600 15px/1 var(--f-code); color: var(--muted); }
+.rp-item .st { font: 600 13px/1 var(--f-body); letter-spacing: .06em; text-transform: uppercase; }
+.rp-item.rel { border-color: var(--good); background: var(--good-soft); }
+.rp-item.rel .st { color: var(--good); }
+.rp-item.out { opacity: .4; border-style: dashed; }
+.rp-cut { border-top: 3px dashed var(--accent); margin: 2px 0; position: relative; height: 0; }
+.rp-cut span { position: absolute; right: 0; top: -12px; background: var(--paper); color: var(--accent); font: 600 13px/1 var(--f-body); padding: 4px 8px; border: 1.5px solid var(--accent); border-radius: 999px; }
+.rp-ctl { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; font-size: 20px; }
+.rp-ctl input[type=range] { width: 220px; accent-color: var(--accent); }
+.stepper { display: inline-flex; align-items: center; border: 1.5px solid var(--line); border-radius: 999px; overflow: hidden; }
+.stepper button { border: 0; background: var(--paper); width: 34px; height: 32px; cursor: pointer; font-size: 18px; }
+.stepper span { min-width: 30px; text-align: center; font-family: var(--f-code); }
+.rp-metrics { display: grid; gap: 12px; align-content: start; }
+.mrow { display: grid; grid-template-columns: 150px 1fr 70px; gap: 14px; align-items: center; }
+.mrow .mn { font: 600 18px/1.1 var(--f-code); }
+.mrow .mf { font-size: 15.5px; color: var(--muted); font-family: var(--f-code); grid-column: 1 / -1; margin-top: -6px; }
+.bar { height: 18px; background: var(--paper-2); border-radius: 9px; border: 1.5px solid var(--line); overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--accent); border-radius: 9px; transition: width .25s; }
+.mrow .mv { text-align: right; font: 600 20px/1 var(--f-code); font-variant-numeric: tabular-nums; }
+
+/* ---------- failure clinic ---------- */
+.clinic { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.case { padding: 18px 20px; display: grid; gap: 10px; align-content: start; cursor: pointer; text-align: left; background: var(--paper); min-height: 0; }
+.case.open .sc { font-size: 21px; }
+.case .sc { font-size: 25px; line-height: 1.4; }
+.case .reveal { display: none; gap: 8px; }
+.case.open .reveal { display: grid; }
+.case.open .ask { display: none; }
+.case .ask { font-size: 18px; color: var(--accent); font-weight: 600; letter-spacing: .04em; }
+.mini { display: grid; grid-template-columns: 150px 1fr 50px; gap: 8px; align-items: center; font-size: 15.5px; font-family: var(--f-code); }
+.mini .bar { height: 12px; } .mini .bar > i { background: var(--good); }
+.mini.drop .bar > i { background: var(--bad); } .mini.drop { color: var(--bad); font-weight: 700; }
+.case .why { font-size: 19px; color: var(--muted); line-height: 1.4; }
+
+/* ---------- faithfulness walk ---------- */
+.fw { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+.fw .box { padding: 18px 22px; display: grid; gap: 10px; align-content: start; }
+.fw .lbl { font: 600 14px/1 var(--f-body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.claim { display: grid; grid-template-columns: 38px 1fr 44px; gap: 12px; align-items: center; padding: 13px 16px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--paper); font-size: 23px; }
+.claim .n { font: 600 15px/1 var(--f-code); color: var(--muted); }
+.claim .v { font: 400 30px/1 var(--f-hand); text-align: center; }
+.claim.ok { border-color: var(--good); } .claim.ok .v { color: var(--good); }
+.claim.no { border-color: var(--bad); background: var(--bad-soft); } .claim.no .v { color: var(--bad); }
+.score-big { font: 400 64px/1 var(--f-hand); white-space: nowrap; }
+
+/* ---------- mlflow table ---------- */
+.ml { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 28px; min-height: 0; }
+.ml table { font-size: 20px; }
+.ml td:first-child { white-space: nowrap; font-weight: 600; }
+.ml th { cursor: pointer; white-space: nowrap; user-select: none; font-size: 14px; }
+.ml th.sorted { color: var(--accent); }
+.ml td { padding: 14px 10px; } .ml th { padding: 12px 10px; }
+.ml td.best { color: var(--good); font-weight: 700; }
+.ml td.worst { color: var(--bad); }
+.ml tr.base td:first-child { color: var(--accent); }
+.ml select { font: inherit; font-size: 16px; padding: 6px 10px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--paper); color: var(--ink); }
+.hbar { display: grid; grid-template-columns: 140px 1fr 56px; gap: 10px; align-items: center; font-size: 17px; }
+.hbar .bar > i { background: var(--violet); }
+.hbar.base .bar > i { background: var(--accent); }
+
+/* ---------- threshold sim ---------- */
+.ts { display: grid; grid-template-columns: 1fr 380px; gap: 30px; min-height: 0; }
+.ts svg text { font-family: var(--f-body); fill: var(--ink); }
+.ts .ctl { display: grid; gap: 18px; align-content: start; font-size: 21px; }
+.ts input[type=range] { width: 100%; accent-color: var(--accent); }
+.ts .out { font: 400 40px/1.1 var(--f-hand); }
+.ts button { border: 1.5px solid var(--ink); background: var(--paper); border-radius: 10px; padding: 10px 14px; cursor: pointer; font-weight: 600; }
+
+/* ---------- terminal ---------- */
+.term { background: #11151c; color: #d7dde8; border-radius: 12px; padding: 18px 22px; font: 15.5px/1.55 var(--f-code); overflow: auto; white-space: pre; min-height: 0; }
+.term .c { color: #8b95a7; } .term .p { color: #8ce99a; } .term .f { color: #ff8fab; font-weight: 600; } .term .ok { color: #8ce99a; font-weight: 600; }
+
+@media (prefers-reduced-motion: reduce) { .frag, .bar > i, .progress { transition: none; } }
+</style>
+<!--HEAD-->
+</head>
+<body>
+<!--/HEAD-->
+<div class="viewport" id="viewport">
+<main class="stage" id="stage" aria-live="polite">
+
+<!-- ===================================================== 1 · TITLE -->
+<section class="slide" data-section="Workshop 3 of 5" data-min="0.5" data-title="RAG Evaluation">
+  <div class="title-wrap">
+    <div style="display:grid; gap:28px">
+      <div class="kicker">From PDF to Production · Arabic Legal RAG in One Day</div>
+      <h1>RAG<br>Evaluation</h1>
+      <p class="lede">Turning “it seems to work” into numbers you can defend, on the Egyptian Civil Code.</p>
+      <div class="meta"><span><b>45 min</b> · Workshop 3 of 5</span><span>golden sets · retrieval metrics · RAGAS · MLflow · quality gates</span></div>
+      <p class="small">Press <code>→</code> to start · <code>N</code> notes · <code>O</code> overview · <code>?</code> all keys</p>
+    </div>
+    <div class="diagram" style="height:600px">{{svg:title-art}}</div>
+  </div>
+  <aside class="notes">
+    <ul>
+      <li>Welcome back from lunch. W2 ended with a system that answers and cites. Everyone was happy.</li>
+      <li>This hour is about the uncomfortable question: <b>how do you know it is good?</b></li>
+      <li>Timer starts when you press → (top-left pill). Budget: 45 min.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ===================================================== 2 · DAY MAP -->
+<section class="slide" data-section="Opening" data-min="1" data-title="Where we are in the day">
+  <div class="kicker">Opening</div>
+  <h2>Where we are in the day</h2>
+  <div class="diagram grow">{{svg:day-map}}</div>
+  <p class="lede">W1 and W2 built the system. This workshop builds the <mark>instrument</mark> that W4 and W5 depend on: every later decision is checked against these numbers.</p>
+  <aside class="notes">
+    <ul>
+      <li>W4 will make things faster: every optimisation must be re-scored, because a faster system that hallucinates more is not better.</li>
+      <li>W5's CI gate is literally this eval, run on every PR.</li>
+      <li>So what we build in the next 45 minutes gets reused twice more today.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ===================================================== 3 · EYEBALL TEST -->
+<section class="slide" data-section="Opening" data-min="1.5" data-title="The eyeball test">
+  <div class="kicker">Opening</div>
+  <h2>Three answers from this morning. Do they look right?</h2>
+  <div class="cols-3 grow">
+    <div class="qa sketch">
+      <div class="q ar" lang="ar">ما هي سن الرشد؟</div>
+      <div class="a ar" lang="ar">سن الرشد هي ثماني عشرة سنة (المادة 45).</div>
+      <div class="stamp">looks fine</div>
+      <div class="verdict frag"><span class="stamp bad">wrong</span><span>Majority is <b>21</b>, Article <b>44</b>. The English version of the same question gets it right.</span><span class="t-acc small">caught by: hit@k · bilingual test</span></div>
+    </div>
+    <div class="qa sketch">
+      <div class="q">What does Article 60 of the Civil Code say?</div>
+      <div class="a">Article 60 regulates how associations are founded.</div>
+      <div class="stamp">looks fine</div>
+      <div class="verdict frag"><span class="stamp bad">invented</span><span>Articles 54–80 are <b>repealed</b>. Fluent, confident, and made up.</span><span class="t-acc small">caught by: repeal check · faithfulness</span></div>
+    </div>
+    <div class="qa sketch">
+      <div class="q">Can a judge reduce an obligation made onerous by exceptional events?</div>
+      <div class="a">A contract must be performed in good faith (Article 148).</div>
+      <div class="stamp">looks fine</div>
+      <div class="verdict frag"><span class="stamp bad">incomplete</span><span>True, but the answer is in <b>Article 147(2)</b>, which was never retrieved. Faithful <i>and</i> wrong.</span><span class="t-acc small">caught by: context recall · recall@k</span></div>
+    </div>
+  </div>
+  <aside class="notes">
+    <ul>
+      <li>Ask the room: hands up if you would ship each one. Most hands go up.</li>
+      <li>Press → three times to reveal what is wrong with each.</li>
+      <li>Key line: <b>"LLM failures don't throw exceptions. They produce fluent text."</b> You can't find these by reading a few answers. You find them by measuring every answer the same way, every time.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ===================================================== 4 · EXAM DASHCAM BRAKES -->
+<section class="slide" data-section="Why evaluate" data-min="1.5" data-title="Evaluation, observability, guardrails">
+  <div class="kicker">Why evaluate</div>
+  <h2>Three jobs people mix up</h2>
+  <div class="diagram grow">{{svg:exam-dashcam-brakes}}</div>
+  <p class="lede">Today is the exam. W5 adds the dashcam and the brakes. None of them replaces the others.</p>
+  <aside class="notes">
+    <ul>
+      <li>Evaluation: fixed questions, before release, produces scores. It stops a bad <b>release</b>, not a bad answer.</li>
+      <li>Observability: real traffic, after release. Tells you afterwards.</li>
+      <li>Guardrails: inline, every request. The only one that blocks one bad answer.</li>
+      <li>Common mistake: "we have Langfuse, so we evaluate." No: traces without a fixed exam cannot tell you if v2 is better than v1.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ===================================================== 5 · NO UNIVERSAL METRIC -->
+<section class="slide" data-section="Why evaluate" data-min="1" data-title="There is no universal LLM metric">
+  <div class="kicker">Why evaluate</div>
+  <h2>There is no universal LLM metric</h2>
+  <table class="tbl">
+    <thead><tr><th>Task</th><th>What failure looks like</th><th>So you measure</th></tr></thead>
+    <tbody>
+      <tr><td><b>Chatbot</b></td><td>rude, unhelpful, off-topic</td><td>helpfulness, tone, safety</td></tr>
+      <tr><td><b>Summarizer</b></td><td>drops key points, adds facts</td><td>coverage, consistency with the source</td></tr>
+      <tr><td><b>Legal RAG</b> <span class="tag t-acc">ours</span></td><td>invented ruling · wrong or phantom article · repealed law treated as live · half the needed articles · worse in Arabic</td><td><mark>faithfulness · citation accuracy · context recall · repeal &amp; refusal behaviour · AR/EN parity</mark></td></tr>
+    </tbody>
+  </table>
+  <div class="callout">Start from <b>how your system fails</b>, then pick metrics that drop when it does. Never the other way round.</div>
+  <aside class="notes">
+    <ul>
+      <li>BLEU/ROUGE, "LLM score out of 10": generic metrics measure something, just not your risk.</li>
+      <li>For a lawyer, a fluent answer citing the wrong article is worse than "I don't know".</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ===================================================== 6 · WHERE RAG BREAKS -->
+<section class="slide" data-section="Why evaluate" data-min="2" data-title="Where a RAG system breaks">
+  <div class="kicker">Why evaluate</div>
+  <h2>Where a RAG system breaks</h2>
+  <div class="diagram grow">{{svg:rag-failure-points}}</div>
+  <p class="lede">An end-to-end score tells you <i>that</i> it failed. Scoring each stage tells you <mark>where to fix it</mark>.</p>
+  <aside class="notes">
+    <ul>
+      <li>Walk left to right. 1 is W1's job (parsing). 2–3 are retrieval. 4–5 are generation.</li>
+      <li>Retrieval failures can be measured with plain code because we know the gold article numbers. Generation failures need a judge.</li>
+      <li>The question to always ask about a wrong answer: <b>did it retrieve the right article?</b> If no, fix retrieval. If yes, fix the prompt/model.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ===================================================== 7 · GOLDEN SET SOURCES -->
+<section class="slide" data-section="The golden set" data-min="2" data-title="Where a golden set comes from">
+  <div class="kicker">The golden set</div>
+  <h2>The golden set: the exam every version must sit</h2>
+  <div class="diagram grow">{{svg:golden-set-sources}}</div>
+  <p class="lede">Same questions, every run. Change the questions and old scores stop meaning anything.</p>
+  <aside class="notes">
+    <ul>
+      <li>We start from the reference repo's benchmark (<code>evaluation/data/civil_code_rag_qa_benchmark.json</code>).</li>
+      <li>Synthetic generation is fine as a draft. Unreviewed synthetic questions test whether one LLM agrees with another.</li>
+      <li>Best long-term source: real questions that failed in production (W5 closes this loop).</li>
+      <li>Room activity, if time allows: each participant writes 2 questions of their own into the set.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ===================================================== 8 · ONE RECORD -->
+<section class="slide" data-section="The golden set" data-min="2" data-title="Anatomy of one record">
+  <div class="kicker">The golden set · click any line</div>
+  <h2>Anatomy of one golden record</h2>
+  <div class="grow" style="min-height:0">
+    <div class="cx no-tree" data-explorer="record"></div>
+  </div>
+  <aside class="notes">
+    <ul>
+      <li>Click each field. The two that matter most: <code>gold_articles</code> (makes retrieval free to score) and <code>type</code> (lets you report per behaviour).</li>
+      <li>This one is a repealed-article question: the correct answer is "this article was repealed".</li>
+      <li>Schema is enforced in <code>golden_set.py</code> with Pydantic.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ===================================================== 9 · COVERAGE + PITFALLS -->
+<section class="slide" data-section="The golden set" data-min="1.5" data-title="Coverage and pitfalls">
+  <div class="kicker">The golden set</div>
+  <h2>Cover the behaviours, not just the topics</h2>
+  <div class="cols-2 grow">
+    <table class="tbl">
+      <thead><tr><th>Type</th><th>Example</th><th class="num">Seed set</th></tr></thead>
+      <tbody>
+        <tr><td><code>lookup</code></td><td>What does Article 147 say?</td><td class="num">4</td></tr>
+        <tr><td><code>concept</code></td><td>When is a contract concluded?</td><td class="num">10</td></tr>
+        <tr><td><code>multi</code></td><td>needs 147(2) <i>and</i> 148</td><td class="num">2</td></tr>
+        <tr><td><code>repealed</code></td><td>What does Article 60 say?</td><td class="num">2</td></tr>
+        <tr><td><code>out_of_scope</code></td><td>Penalty for theft? (criminal law)</td><td class="num">2</td></tr>
+        <tr><td colspan="2"><b>every question in Arabic and English</b></td><td class="num"><b>20</b></td></tr>
+      </tbody>
+    </table>
+    <div class="card sketch">
+      <h3>Pitfalls</h3>
+      <ul class="clean">
+        <li><b>Too easy:</b> questions copied from the article text. BM25 wins, nothing is tested.</li>
+        <li><b>Rot:</b> W1 re-parses and article numbers shift. Gold IDs silently go stale.</li>
+        <li><b>Unversioned:</b> someone edits a question, and last week's scores are no longer comparable.</li>
+        <li><b>English only:</b> hides the Arabic gap.</li>
+        <li><b>Size:</b> 20 in the room, 50 take-home, a few hundred before you trust small differences.</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">
+    <ul>
+      <li>The seed set (<code>code/data/golden_set.seed.jsonl</code>) is exactly this mix: 10 AR/EN pairs.</li>
+      <li>With 20 questions one question is 5 percentage points. Don't celebrate a 0.03 improvement.</li>
+      <li>Version it with DVC; the runner logs its hash with every run.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ===================================================== 10 · TRIAD -->
+<section class="slide" data-section="What to measure" data-min="2" data-title="The RAG triad, plus recall">
+  <div class="kicker">What to measure</div>
+  <h2>Four arrows, four questions</h2>
+  <div class="diagram grow">{{svg:rag-triad}}</div>
+  <p class="lede"><span class="t-acc">Blue</span> judges the retriever. <span class="t-good">Green</span> judges the generator. The reference answer is the only part a human writes.</p>
+  <aside class="notes">
+    <ul>
+      <li>These are the four RAGAS metrics. Each arrow compares two things.</li>
+      <li>Faithfulness never looks at the reference: it only asks "is the answer supported by what was retrieved?" So a faithful answer can still be incomplete (slide 3, example 3).</li>
+      <li>Next: the blue side, done without any LLM.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ===================================================== 11 · RETRIEVAL PLAYGROUND -->
+<section class="slide" data-section="What to measure" data-min="2.5" data-title="Retrieval metrics, live">
+  <div class="kicker">Retrieval metrics · click articles to mark them relevant</div>
+  <h2>Retrieval metrics cost nothing. Run them on every commit.</h2>
+  <div class="rp grow">
+    <div style="display:grid; gap:14px; align-content:start">
+      <p class="small">Question: <i>“When can a party ask to rescind a contract?”</i> · gold articles <b>157, 158, 160</b></p>
+      <div class="rp-list" id="rp-list"></div>
+    </div>
+    <div style="display:grid; gap:20px; align-content:start">
+      <div class="rp-ctl">
+        <label for="rp-k">k = <b id="rp-kv">5</b></label><input type="range" id="rp-k" min="1" max="10" value="5">
+        <span>gold not retrieved:</span>
+        <span class="stepper"><button type="button" id="rp-minus" aria-label="fewer missed">−</button><span id="rp-miss">1</span><button type="button" id="rp-plus" aria-label="more missed">+</button></span>
+      </div>
+      <div class="rp-metrics" id="rp-metrics"></div>
+      <div class="callout small">Legal answers rest on <b>article numbers</b>, so “relevant” is an ID match. No judge, no randomness, no cost.</div>
+    </div>
+  </div>
+  <aside class="notes">
+    <ul>
+      <li>Start: gold 157 at rank 1, 158 at rank 4, 160 missed. Show hit@5 = 1, recall@5 = 0.67.</li>
+      <li>Drag k to 3: recall drops (158 is cut). This is "found it, ranked 9th, cut by top_k".</li>
+      <li>Click rank-1 to unmark it: MRR collapses. That's what the reranker fixes.</li>
+      <li>Code: <code>retrieval_metrics.py</code>, ~40 lines.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ===================================================== 12 · LLM JUDGE -->
+<section class="slide" data-section="Judging answers" data-min="2" data-title="LLM-as-judge">
+  <div class="kicker">Judging answers</div>
+  <h2>The green side needs a judge: another LLM</h2>
+  <div class="diagram" style="height:340px">{{svg:llm-judge}}</div>
+  <h3>A judge is an instrument, and it has biases</h3>
+  <div class="row" style="gap:18px">
+    <div class="card sketch" style="flex:1"><span class="tag t-bad">self-preference</span><p>Rates answers from its own model family higher.</p></div>
+    <div class="card sketch" style="flex:1"><span class="tag t-bad">verbosity</span><p>Longer answers look better.</p></div>
+    <div class="card sketch" style="flex:1"><span class="tag t-bad">language</span><p>English-trained judges on Arabic legal text: <mark>unknown bias</mark>.</p></div>
+    <div class="card sketch" style="flex:1"><span class="tag t-bad">noise</span><p>Same input, slightly different score each run.</p></div>
+  </div>
+  <p class="small"><b>Mitigate:</b> temperature 0 · a different model family from the generator · structured output · log the judge as a parameter · hand-check 20 judgments against a lawyer.</p>
+  <aside class="notes">
+    <ul>
+      <li>RAGAS is a library of carefully-prompted judge pipelines with structured outputs.</li>
+      <li>Changing the judge model changes all your scores. That's why it's logged as an MLflow param.</li>
+      <li>Calibration and bias tests are take-home; just know they exist.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ===================================================== 13 · FAITHFULNESS WALK -->
+<section class="slide" data-section="Judging answers" data-min="2" data-title="How faithfulness is computed">
+  <div class="kicker">Judging answers · press → to step</div>
+  <h2>Faithfulness, step by step</h2>
+  <div class="fw grow">
+    <div style="display:grid; gap:16px; align-content:start">
+      <div class="box sketch">
+        <span class="lbl">Retrieved context · Article 147</span>
+        <p style="font-size:22px">The contract makes the law of the parties. It may only be revoked or amended by mutual agreement or for reasons provided by law. (2) If exceptional, unforeseeable public events make performance excessively onerous, the judge may reduce the obligation to a reasonable limit.</p>
+      </div>
+      <div class="box sketch">
+        <span class="lbl">Answer under test</span>
+        <p style="font-size:22px">Under Article 147 a contract binds both parties and can only be changed by mutual agreement. A judge may reduce an onerous obligation after exceptional events, and <b>must cancel the contract if one party lost more than a third of its value</b>.</p>
+      </div>
+    </div>
+    <div style="display:grid; gap:12px; align-content:start">
+      <span class="lbl frag" style="font:600 14px/1 var(--f-body); letter-spacing:.1em; text-transform:uppercase; color:var(--muted)">1 · the judge splits the answer into claims</span>
+      <div class="claim frag" data-step="claims"><span class="n">c1</span><span>A contract binds both parties and changes need mutual agreement.</span><span class="v"></span></div>
+      <div class="claim frag" data-step="claims"><span class="n">c2</span><span>A judge may reduce an onerous obligation after exceptional events.</span><span class="v"></span></div>
+      <div class="claim frag" data-step="claims"><span class="n">c3</span><span>The judge must cancel the contract if a party lost over a third of its value.</span><span class="v"></span></div>
+      <span class="lbl frag" data-verify style="font:600 14px/1 var(--f-body); letter-spacing:.1em; text-transform:uppercase; color:var(--muted)">2 · each claim is checked against the context</span>
+      <div class="frag" data-score style="display:flex; gap:22px; align-items:center; margin-top:8px">
+        <span class="score-big">2 / 3 = 0.67</span>
+        <span class="small">supported claims ÷ all claims.<br>c3 was invented: the exact failure that matters most in law.</span>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <ul>
+      <li>Step 1: decomposition into atomic claims (an LLM call). Step 2: NLI-style verification of each claim against the retrieved text (more LLM calls). Score = ratio.</li>
+      <li>c3 sounds like real law (it resembles a lesion rule) but is not in Article 147. That's why fluent hallucinations are dangerous.</li>
+      <li>Cost: at least 2 judge calls per question just for this metric.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ===================================================== 14 · OTHER 3 METRICS -->
+<section class="slide" data-section="Judging answers" data-min="1.5" data-title="The other three RAGAS metrics">
+  <div class="kicker">Judging answers</div>
+  <h2>The other three, in one recipe each</h2>
+  <div class="cols-3 grow">
+    <div class="card sketch">
+      <span class="tag t-good">generator</span>
+      <h3>Answer relevancy</h3>
+      <ol style="margin:0; padding-left:22px; display:grid; gap:6px"><li>Judge writes 3 questions the answer would answer</li><li>Embed them and the real question</li><li>Mean cosine similarity</li></ol>
+      <p class="small"><b>Drops when</b> the answer pastes the whole article, hedges, or answers a neighbouring question.</p>
+    </div>
+    <div class="card sketch">
+      <span class="tag t-acc">retriever</span>
+      <h3>Context precision</h3>
+      <ol style="margin:0; padding-left:22px; display:grid; gap:6px"><li>For each retrieved article: is it useful for the reference answer?</li><li>Average precision, weighted by rank</li></ol>
+      <p class="small"><b>Drops when</b> ten articles come back and one is useful, or the useful one sits at rank 9.</p>
+    </div>
+    <div class="card sketch">
+      <span class="tag t-acc">retriever</span>
+      <h3>Context recall</h3>
+      <ol style="margin:0; padding-left:22px; display:grid; gap:6px"><li>Split the <b>reference</b> answer into claims</li><li>Can each be attributed to the retrieved articles?</li><li>Fraction attributed</li></ol>
+      <p class="small"><b>Drops when</b> the answer needs three articles and we found one.</p>
+    </div>
+  </div>
+  <div class="callout warn">Context precision and recall need a <b>reference answer</b>. Faithfulness and relevancy do not, which is why they can also run on live traffic in W5.</div>
+  <aside class="notes">
+    <ul>
+      <li>Answer relevancy needs an embedding model: use a multilingual one (we use BAAI/bge-m3) or Arabic answers score low for the wrong reason.</li>
+      <li>Retrieval-side RAGAS metrics are LLM versions of what we computed for free on slide 11. With gold IDs, prefer the free ones; RAGAS versions help when gold IDs are missing.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ===================================================== 15 · FAILURE CLINIC -->
+<section class="slide" data-section="Judging answers" data-min="2" data-title="Failure clinic">
+  <div class="kicker">Judging answers · which metric drops? click to reveal</div>
+  <h2>Failure clinic</h2>
+  <div class="clinic grow" id="clinic"></div>
+  <aside class="notes">
+    <ul>
+      <li>Ask the room before clicking each. Make them commit to an answer.</li>
+      <li>Last card is the trap: faithfulness 0.95 and the answer is still wrong. Always look at context recall next to faithfulness.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ===================================================== 16 · LEGAL CHECKS -->
+<section class="slide" data-section="Judging answers" data-min="1.5" data-title="Domain checks in plain code">
+  <div class="kicker">Judging answers</div>
+  <h2>If code can check it, don't pay a judge</h2>
+  <table class="tbl">
+    <thead><tr><th>Check</th><th>Rule</th><th>Why a lawyer cares</th></tr></thead>
+    <tbody>
+      <tr><td><code>citation_present</code></td><td>answer cites at least one article</td><td>an uncited answer can't be verified</td></tr>
+      <tr><td><code>citation_grounded</code></td><td>cited ⊆ retrieved</td><td><mark>phantom citations</mark> come from model memory</td></tr>
+      <tr><td><code>citation_correct</code></td><td>cited ∩ gold ≠ ∅</td><td>the right article, not a neighbour</td></tr>
+      <tr><td><code>repeal_flagged</code></td><td>says “repealed” for 54–80</td><td>repealed law answered as live law</td></tr>
+      <tr><td><code>refused_out_of_scope</code></td><td>declines criminal-law questions</td><td>inventing law is worse than “not covered”</td></tr>
+    </tbody>
+  </table>
+  <p class="small"><code>cited_articles("<bdi lang="ar">وفقاً للمادة ١٤٧ والمادة 148</bdi>")</code> → <code>{147, 148}</code> · Arabic-Indic digits normalised · see <code>legal_checks.py</code></p>
+  <aside class="notes">
+    <ul>
+      <li>These are deterministic, free, and closer to what a legal reviewer checks first.</li>
+      <li>citation_grounded links to W2's <code>ensure_article_citations</code> discussion: we now measure how often it is needed.</li>
+      <li>Not-applicable is recorded as None, not 0, so averages stay honest.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ===================================================== 17 · BILINGUAL -->
+<section class="slide" data-section="Arabic" data-min="2" data-title="Bilingual ablation">
+  <div class="kicker">Arabic · the corpus's biggest asset</div>
+  <h2>Same question, two languages, same article?</h2>
+  <div class="diagram" style="height:300px">{{svg:bilingual}}</div>
+  <div class="cols-3">
+    <div class="card sketch"><h3>Why it's free</h3><p>Every article exists in Arabic and English, so every question gets a twin. Link them with <code>pair_id</code>.</p></div>
+    <div class="card sketch"><h3>What we report</h3><p>top-1 agreement · Jaccard@5 · <b>hit@5 (AR − EN)</b>. A negative gap means the embedder reads Arabic worse.</p></div>
+    <div class="card sketch"><h3>Watch the judge too</h3><p>An English-centric judge scoring Arabic answers may be biased. Hand-check a sample of Arabic judgments.</p></div>
+  </div>
+  <aside class="notes">
+    <ul>
+      <li>This test answers a question almost nobody measures: does your embedding model understand Arabic, or just match characters?</li>
+      <li>Normalisation from W2 (<code>normalize_arabic_for_sparse</code>) shows up here: turn it off and watch the gap grow.</li>
+      <li>Code: <code>bilingual.py</code>, 30 lines.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ===================================================== 18 · PIPELINE -->
+<section class="slide" data-section="The code" data-min="1.5" data-title="How the eval module is wired">
+  <div class="kicker">The code · src/evaluation/</div>
+  <h2>A module, not a notebook</h2>
+  <div class="diagram grow">{{svg:eval-pipeline}}</div>
+  <p class="lede">A notebook can't be a CI gate. One command, one report, one exit code.</p>
+  <aside class="notes">
+    <ul>
+      <li>The reference repo evaluates in notebooks (<code>experiments/evaluation_*.ipynb</code>). We move it into <code>src/evaluation/</code>.</li>
+      <li>Free scorers first, paid scorer last and optional (<code>--skip-ragas</code>).</li>
+      <li>The evaluator only talks to the system over <code>/ask</code>. It never imports retrieval code.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ===================================================== 19 · CODE EXPLORER -->
+<section class="slide" data-section="The code" data-min="3.5" data-title="Code walkthrough">
+  <div class="kicker">The code · click a file, then any highlighted line</div>
+  <div class="grow" style="min-height:0">
+    <div class="cx" data-explorer="code"></div>
+  </div>
+  <aside class="notes">
+    <ul>
+      <li>Don't read code line by line. Open <code>__main__.py</code> first: the five steps of <code>run()</code> are the whole design.</li>
+      <li>Then <code>legal_checks.py</code> (phantom citations), <code>ragas_eval.py</code> (judge setup), <code>gate.py</code> (exit code).</li>
+      <li>Everything else is reference for the take-home.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ===================================================== 20 · RUN IT -->
+<section class="slide" data-section="The code" data-min="1" data-title="Run it">
+  <div class="kicker">The code · real output from the mock API</div>
+  <h2>Run it</h2>
+  <div class="cols-2 grow" style="grid-template-columns: .95fr 1.05fr">
+    <div class="term">{{RUN_COMMANDS}}</div>
+    <div class="term">{{RUN_OUTPUT}}</div>
+  </div>
+  <aside class="notes">
+    <ul>
+      <li><code>mock_rag_api.py</code> fakes /ask with five planted mistakes, so the room can run this even if their W2 API is broken.</li>
+      <li>Point at the output: phantom citations (citation_grounded 0.78), repeal never flagged (0.00), Arabic worse than English (−0.10). The gate fails on exactly those.</li>
+      <li>The gate also fails on missing faithfulness because we skipped RAGAS: a silent metric is a failing metric.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ===================================================== 21 · MLFLOW -->
+<section class="slide" data-section="Experiments" data-min="1.5" data-title="Every eval is an MLflow run">
+  <div class="kicker">Experiments</div>
+  <h2>Every evaluation is an MLflow run</h2>
+  <div class="cols-2 grow">
+    <div style="display:grid; gap:14px; align-content:start">
+      <div class="card sketch"><span class="tag t-vio">params</span><p>what you changed: <code>chunking</code> · <code>top_k</code> · <code>retrieval</code> · <code>use_reranker</code> · <code>judge</code> · <code>golden_set_hash</code></p></div>
+      <div class="card sketch"><span class="tag t-good">metrics</span><p>what you got: hit@5, MRR, faithfulness, context recall, citation_grounded…</p></div>
+      <div class="card sketch"><span class="tag t-acc">artifacts + tags</span><p><code>per_question.csv</code> · <code>report.json</code> · <code>git_sha</code></p></div>
+    </div>
+    <div class="card sketch">
+      <h3>One run per table</h3>
+      <table class="tbl" style="font-size:23px">
+        <tbody>
+          <tr><td>1</td><td>per-article chunks (baseline)</td></tr>
+          <tr><td>2</td><td>512-token chunks</td></tr>
+          <tr><td>3</td><td><code>--retrieval dense</code></td></tr>
+          <tr><td>4</td><td><code>--no-reranker</code></td></tr>
+          <tr><td>5</td><td><code>--top-k 5</code> · <code>--top-k 20</code></td></tr>
+        </tbody>
+      </table>
+      <p class="small">Each table runs one configuration against the same golden set. We compare them on the next slide.</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <ul>
+      <li>Shared tracking server for the room, or each laptop with <code>MLFLOW_TRACKING_URI=sqlite:///mlflow.db</code> and screen-share the best one.</li>
+      <li>The payoff: W1 and W2 decisions are now justified by numbers, not by assertion.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ===================================================== 22 · COMPARE RUNS -->
+<section class="slide" data-section="Experiments" data-min="2" data-title="Comparing runs">
+  <div class="kicker">Experiments · click a column to sort · illustrative numbers, replace with the room's runs</div>
+  <h2>Did W1 and W2 choose right?</h2>
+  <div class="ml grow" id="ml"></div>
+  <aside class="notes">
+    <ul>
+      <li>These numbers are illustrative, shaped like real results. Replace them with the room's runs (edit the RUNS array in the deck).</li>
+      <li>512-token chunks: faithfulness looks fine, citation_correct collapses. Chunks no longer map to articles, which is W1's "chunk by article" argument in numbers.</li>
+      <li>top_k 20: recall up, precision and cost down. Every metric is a trade-off; pick the one that matches your risk.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ===================================================== 23 · THRESHOLDS -->
+<section class="slide" data-section="Thresholds" data-min="2.5" data-title="Thresholds and noise">
+  <div class="kicker">Thresholds · why 0.75 in CI and 0.80 for alerts?</div>
+  <h2>A threshold has to survive the judge's noise</h2>
+  <div class="ts grow">
+    <div class="sketch" style="padding:12px 16px"><svg id="ts-svg" viewBox="0 0 900 470" width="100%" height="100%" role="img" aria-label="Simulated faithfulness scores of repeated CI runs against the gate and alert thresholds"></svg></div>
+    <div class="ctl">
+      <label for="ts-mean">true faithfulness of this PR: <b id="ts-mv">0.82</b></label>
+      <input type="range" id="ts-mean" min="0.65" max="0.95" step="0.01" value="0.82">
+      <label for="ts-sd">judge noise on 20 questions (σ): <b id="ts-sv">0.04</b></label>
+      <input type="range" id="ts-sd" min="0.005" max="0.08" step="0.005" value="0.04">
+      <div class="out" id="ts-out"></div>
+      <button type="button" id="ts-again">Run CI 40 more times</button>
+      <p class="small">Floor = baseline − measured noise. Run one config 3× to measure σ. Plus a regression rule: fail if a metric drops &gt; 0.05 vs main.</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <ul>
+      <li>Each dot is one CI run of the same PR: 20 questions, noisy judge.</li>
+      <li>Set true quality to 0.80 and noise 0.05: the gate at 0.75 still fails some runs of a good PR. Flaky gates get disabled, and a disabled gate is no gate.</li>
+      <li>0.80 alert in production watches a rolling average over many requests: lower noise, so it can be tighter and fire before the release floor is reached.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ===================================================== 24 · FLYWHEEL -->
+<section class="slide" data-section="Wrap-up" data-min="1" data-title="Eval-driven development">
+  <div class="kicker">Wrap-up</div>
+  <h2>Evaluation is a loop, not a step</h2>
+  <div class="diagram grow">{{svg:flywheel}}</div>
+  <aside class="notes">
+    <ul>
+      <li>Every change gets measured. Every failure in production becomes a new golden question. The set grows; the system can't silently regress.</li>
+      <li>Hand-off to W4: "you'll re-run this after every optimisation." And W5: "you'll wire the gate into CI."</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ===================================================== 25 · TAKEAWAYS -->
+<section class="slide" data-section="Wrap-up" data-min="1" data-title="Takeaways">
+  <div class="kicker">Wrap-up</div>
+  <h2>Five things to keep</h2>
+  <div class="cols-2 grow">
+    <ul class="clean" style="align-content:start">
+      <li><b>Eyeballing is not evaluation.</b> A fixed golden set, scored the same way every time.</li>
+      <li><b>Split retrieval from generation.</b> Retrieval metrics are free: run them on every commit.</li>
+      <li><b>Code before judges.</b> Citations, repeal and refusals are deterministic checks.</li>
+      <li><b>Judges are instruments.</b> Log them, calibrate them, and distrust them on Arabic until checked.</li>
+      <li><b>Every change is a run; every PR passes the gate.</b></li>
+    </ul>
+    <div class="card sketch">
+      <h3>Done when</h3>
+      <ul class="clean" style="gap:8px">
+        <li>golden set ≥ 20 questions, Arabic and English</li>
+        <li>all four RAGAS metrics computed and logged</li>
+        <li>≥ 3 MLflow runs with different configurations</li>
+        <li>bilingual result written in the report</li>
+        <li>evaluation lives in <code>src/</code>, not a notebook</li>
+      </ul>
+      <p class="small"><b>Take-home:</b> run the full 50, run one config 3× to measure noise, hand-check 20 judgments against a lawyer, add 5 adversarial questions.</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <ul>
+      <li>Read the five lines. Point at the acceptance checklist.</li>
+      <li>Next: W4, Serving &amp; Performance. "Every optimisation will be scored with what we just built."</li>
+    </ul>
+  </aside>
+</section>
+
+<div class="footer"><span>MLOps MENA · Arabic Legal RAG in One Day · W3 RAG Evaluation · <span id="footer-num"></span></span></div>
+<div class="progress" id="progress"></div>
+</main>
+</div>
+
+<div class="hud hud-tl">
+  <button type="button" class="pill timer" id="timer" title="T: start/pause · R: reset">00:00 / 45:00</button>
+</div>
+<div class="hud hud-br">
+  <button type="button" id="b-notes" title="Speaker notes (N)">Notes</button>
+  <button type="button" id="b-over" title="Overview (O)">Overview</button>
+  <button type="button" id="b-theme" title="Theme (D)">Theme</button>
+  <button type="button" id="b-prev" aria-label="Previous slide">←</button>
+  <button type="button" id="b-next" aria-label="Next slide">→</button>
+</div>
+<div class="notes-drawer" id="notes" hidden></div>
+<div class="overview" id="overview" hidden><div class="overview-grid" id="overview-grid"></div></div>
+<div class="help" id="help" hidden>
+  <h3 style="margin-bottom:10px">Keys</h3>
+  <table>
+    <tr><td><kbd>→</kbd> <kbd>Space</kbd></td><td>next step / slide</td></tr>
+    <tr><td><kbd>←</kbd></td><td>previous slide</td></tr>
+    <tr><td><kbd>N</kbd></td><td>speaker notes</td></tr>
+    <tr><td><kbd>O</kbd></td><td>overview of all slides</td></tr>
+    <tr><td><kbd>T</kbd> / <kbd>R</kbd></td><td>timer start-pause / reset</td></tr>
+    <tr><td><kbd>D</kbd></td><td>light / dark</td></tr>
+    <tr><td><kbd>F</kbd></td><td>fullscreen</td></tr>
+    <tr><td><kbd>Esc</kbd></td><td>close panels</td></tr>
+  </table>
+</div>
+
+<script type="application/json" id="code-data">{{CODE_DATA}}</script>
+<script type="application/json" id="record-data">{{RECORD_DATA}}</script>
+<script>
+(() => {
+"use strict";
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+};
+const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+/* ================= stage scaling ================= */
+const stage = $("#stage");
+function fit() {
+  const s = Math.min(window.innerWidth / 1600, window.innerHeight / 900);
+  stage.style.transform = `scale(${s})`;
+}
+window.addEventListener("resize", fit); fit();
+
+/* ================= navigation ================= */
+const slides = $$(".slide");
+let cur = 0;
+const planned = []; let acc = 0;
+slides.forEach(s => { acc += parseFloat(s.dataset.min || "1"); planned.push(acc); });
+
+function show(i, fromHash = false) {
+  cur = Math.max(0, Math.min(slides.length - 1, i));
+  slides.forEach((s, k) => s.classList.toggle("active", k === cur));
+  $("#progress").style.width = `${((cur + 1) / slides.length) * 100}%`;
+  $("#footer-num").textContent = `${cur + 1} / ${slides.length}`;
+  const k = slides[cur].querySelector(".kicker");
+  if (k && !k.querySelector(".mins")) {
+    const m = document.createElement("span"); m.className = "mins";
+    m.textContent = `· ${slides[cur].dataset.min} min`; k.appendChild(m);
+  }
+  if (!fromHash) history.replaceState(null, "", `#s${cur + 1}`);
+  renderNotes(); markOverview();
+  slides[cur].dispatchEvent(new CustomEvent("enter"));
+}
+function next() {
+  const hidden = $$(".frag:not(.shown)", slides[cur]);
+  if (hidden.length) { revealFrag(hidden[0]); return; }
+  if (cur === 0 && !timer.started) timer.toggle();
+  show(cur + 1);
+}
+function prev() { show(cur - 1); }
+function revealFrag(el) { el.classList.add("shown"); slides[cur].dispatchEvent(new CustomEvent("frag", { detail: el })); }
+
+document.addEventListener("keydown", e => {
+  if (e.target.matches("input, select, textarea")) return;
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const k = e.key;
+  if (["ArrowRight", " ", "PageDown"].includes(k)) { e.preventDefault(); next(); }
+  else if (["ArrowLeft", "PageUp"].includes(k)) { e.preventDefault(); prev(); }
+  else if (k === "Home") show(0);
+  else if (k === "End") show(slides.length - 1);
+  else if (k === "n" || k === "N") toggle("#notes");
+  else if (k === "o" || k === "O") toggle("#overview");
+  else if (k === "t" || k === "T") timer.toggle();
+  else if (k === "r" || k === "R") timer.reset();
+  else if (k === "d" || k === "D") cycleTheme();
+  else if (k === "f" || k === "F") fullscreen();
+  else if (k === "?") toggle("#help");
+  else if (k === "Escape") ["#notes", "#overview", "#help"].forEach(s => $(s).hidden = true);
+});
+$("#b-next").onclick = next; $("#b-prev").onclick = prev;
+$("#b-notes").onclick = () => toggle("#notes");
+$("#b-over").onclick = () => toggle("#overview");
+$("#b-theme").onclick = cycleTheme;
+function toggle(sel) { const el = $(sel); el.hidden = !el.hidden; }
+function fullscreen() {
+  try { if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {}); else document.exitFullscreen(); } catch {}
+}
+function cycleTheme() {
+  const root = document.documentElement;
+  const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  root.dataset.theme = dark ? "light" : "dark";
+  store.set("w3-theme", root.dataset.theme);
+  drawThreshold();
+}
+const savedTheme = store.get("w3-theme"); if (savedTheme) document.documentElement.dataset.theme = savedTheme;
+
+/* notes + overview */
+function renderNotes() {
+  const n = slides[cur].querySelector("aside.notes");
+  $("#notes").innerHTML = `<h4>Slide ${cur + 1} · ${esc(slides[cur].dataset.title || "")} · plan ${slides[cur].dataset.min} min, done by ${fmt(planned[cur] * 60)}</h4>${n ? n.innerHTML : "<p>No notes.</p>"}`;
+}
+const og = $("#overview-grid");
+slides.forEach((s, i) => {
+  const b = document.createElement("button"); b.type = "button";
+  b.innerHTML = `<span class="o-num">${i + 1} · ${esc(s.dataset.section || "")} · ${s.dataset.min} min</span><span class="o-title">${esc(s.dataset.title || "")}</span>`;
+  b.onclick = () => { $("#overview").hidden = true; show(i); };
+  og.appendChild(b);
+});
+function markOverview() { $$("button", og).forEach((b, i) => b.classList.toggle("cur", i === cur)); }
+
+/* ================= timer ================= */
+function fmt(sec) { sec = Math.max(0, Math.round(sec)); return `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`; }
+const timer = {
+  started: false, running: false, t0: 0, acc: 0,
+  now() { return this.acc + (this.running ? (Date.now() - this.t0) / 1000 : 0); },
+  toggle() { if (this.running) { this.acc = this.now(); this.running = false; } else { this.t0 = Date.now(); this.running = true; this.started = true; } this.paint(); },
+  reset() { this.acc = 0; this.t0 = Date.now(); this.paint(); },
+  paint() {
+    const el = $("#timer"), t = this.now();
+    const plannedEnd = planned[cur] * 60, plannedStart = (cur ? planned[cur - 1] : 0) * 60;
+    el.textContent = `${fmt(t)} / 45:00${this.running ? "" : " ⏸"}`;
+    el.classList.toggle("late", this.started && t > plannedEnd + 30);
+    el.classList.toggle("early", this.started && t < plannedStart - 60);
+    el.title = `Planned: this slide should end by ${fmt(plannedEnd)}. T start/pause, R reset.`;
+  },
+};
+$("#timer").onclick = () => timer.toggle();
+setInterval(() => timer.paint(), 1000);
+
+/* ================= syntax highlight ================= */
+const PY_KW = new Set("False None True and as assert async await break class continue def del elif else except finally for from global if import in is lambda nonlocal not or pass raise return try while with yield".split(" "));
+const PY_BI = new Set("self print len set dict list str int float bool sum mean min max sorted enumerate range zip isinstance type super open Exception ValueError".split(" "));
+function hlPython(src) {
+  const re = /("""[\s\S]*?"""|'''[\s\S]*?'''|[rbfRBF]{0,2}"(?:\\.|[^"\\\n])*"|[rbfRBF]{0,2}'(?:\\.|[^'\\\n])*'|#[^\n]*|@[\w.]+|\b\d+(?:\.\d+)?\b|\b[A-Za-z_]\w*\b)/g;
+  let out = "", last = 0, m, prevWord = "";
+  while ((m = re.exec(src))) {
+    out += esc(src.slice(last, m.index));
+    const t = m[0]; let cls = "";
+    if (/^[rbfRBF]{0,2}("""|'''|"|')/.test(t)) cls = "tok-str";
+    else if (t[0] === "#") cls = "tok-com";
+    else if (t[0] === "@") cls = "tok-dec";
+    else if (/^\d/.test(t)) cls = "tok-num";
+    else if (PY_KW.has(t)) cls = "tok-kw";
+    else if (prevWord === "def" || prevWord === "class") cls = "tok-fn";
+    else if (PY_BI.has(t)) cls = "tok-fn";
+    out += cls ? `<span class="${cls}">${esc(t)}</span>` : esc(t);
+    if (/^[A-Za-z_]/.test(t)) prevWord = t;
+    last = m.index + t.length;
+  }
+  return out + esc(src.slice(last));
+}
+function hlJson(src) {
+  return esc(src).replace(/(&quot;|")((?:\\.|[^"\\])*)"(\s*:)?/g, (all, q, body, colon) =>
+    colon ? `<span class="tok-key">"${body}"</span>${colon}` : `<span class="tok-str">"${/[\u0600-\u06FF]/.test(body) ? `<bdi>${body}</bdi>` : body}"</span>`)
+    .replace(/\b(\d+)\b(?![^<]*>)/g, '<span class="tok-num">$1</span>');
+}
+// keep multi-line tokens intact: highlight whole file, then split into lines while re-opening spans
+function splitHighlighted(html) {
+  const lines = []; let open = [], line = "";
+  const re = /(<span class="[^"]+">|<\/span>|\n)/g; let last = 0, m;
+  while ((m = re.exec(html))) {
+    line += html.slice(last, m.index); last = m.index + m[0].length;
+    if (m[0] === "\n") { line += "</span>".repeat(open.length); lines.push(line); line = open.join(""); }
+    else if (m[0] === "</span>") { open.pop(); line += m[0]; }
+    else { open.push(m[0]); line += m[0]; }
+  }
+  line += html.slice(last); lines.push(line);
+  return lines;
+}
+
+/* ================= code explorer ================= */
+function resolveNotes(lines, notes) {
+  return notes.map((n, i) => {
+    const start = lines.findIndex(l => l.includes(n.anchor));
+    if (start < 0) return null;
+    let end = start;
+    for (let j = start; j < lines.length; j++) { if (lines[j].includes(n.until)) { end = j; break; } }
+    return { ...n, idx: i, start, end };
+  }).filter(Boolean);
+}
+function mountExplorer(root, files, withTree) {
+  let fileIdx = 0, sel = -1;
+  root.innerHTML = `${withTree ? `<nav class="cx-tree" aria-label="files"><div class="dir">src/evaluation/</div></nav>` : ""}
+    <div class="cx-code"><pre></pre></div>
+    <div class="cx-panel"><div class="sum"></div><div class="chips"></div><div class="detail sketch"></div><div class="nav"><button type="button" data-d="-1">‹ previous</button><button type="button" data-d="1">next ›</button></div></div>`;
+  const tree = root.querySelector(".cx-tree"), codeBox = root.querySelector(".cx-code"), pre = root.querySelector("pre");
+  const sum = root.querySelector(".sum"), chips = root.querySelector(".chips"), detail = root.querySelector(".detail");
+  if (tree) files.forEach((f, i) => {
+    const b = document.createElement("button"); b.type = "button";
+    b.innerHTML = `<span class="fn">${esc(f.label)}</span><span class="ft">${esc(f.tag || "")}</span>`;
+    b.onclick = () => load(i); tree.appendChild(b);
+  });
+  root.querySelectorAll(".nav button").forEach(b => b.onclick = () => step(+b.dataset.d));
+  let notes = [];
+  function load(i) {
+    fileIdx = i; sel = -1; const f = files[i];
+    if (tree) [...tree.querySelectorAll("button")].forEach((b, k) => b.classList.toggle("on", k === i));
+    const raw = f.code.replace(/\s+$/, "").split("\n");
+    notes = resolveNotes(raw, f.notes);
+    const html = splitHighlighted(f.lang === "json" ? hlJson(f.code.replace(/\s+$/, "")) : hlPython(f.code.replace(/\s+$/, "")));
+    const owner = new Array(raw.length).fill(-1);
+    notes.forEach((n, k) => { for (let j = n.start; j <= n.end; j++) if (owner[j] < 0) owner[j] = k; });
+    pre.innerHTML = html.map((h, j) => {
+      const o = owner[j], first = o >= 0 && notes[o].start === j;
+      return `<div class="ln${o >= 0 ? " ann" : ""}${first ? " first" : ""}" data-o="${o}"><span class="no">${j + 1}</span><span class="src">${h || " "}${first ? `<span class="badge">${o + 1}</span>` : ""}</span></div>`;
+    }).join("");
+    sum.innerHTML = `<b class="mono" style="color:var(--ink)">${esc(f.label)}</b> · ${f.summary}`;
+    chips.innerHTML = notes.map((n, k) => `<button type="button" data-k="${k}">${k + 1} · ${esc(n.title)}</button>`).join("");
+    chips.querySelectorAll("button").forEach(b => b.onclick = () => select(+b.dataset.k));
+    detail.innerHTML = `<h3>Click a highlighted line</h3><p>Numbered regions are explained here. Use <b>next ›</b> to walk through them in order.</p><p class="hint">${notes.length} notes in this file.</p>`;
+    codeBox.classList.remove("dim"); codeBox.scrollTop = 0;
+  }
+  function select(k) {
+    sel = k; const n = notes[k];
+    pre.querySelectorAll(".ln").forEach(l => l.classList.toggle("sel", +l.dataset.o === k));
+    codeBox.classList.add("dim");
+    chips.querySelectorAll("button").forEach((b, j) => b.classList.toggle("on", j === k));
+    detail.innerHTML = `<span class="tag t-acc">${k + 1} of ${notes.length} · lines ${n.start + 1}–${n.end + 1}</span><h3>${esc(n.title)}</h3><p>${n.body}</p>`;
+    const line = pre.querySelectorAll(".ln")[n.start];
+    if (line) codeBox.scrollTo({ top: Math.max(0, line.offsetTop - 80), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  }
+  function step(d) {
+    if (!notes.length) return;
+    if (sel + d >= notes.length && tree && fileIdx < files.length - 1) { load(fileIdx + 1); select(0); return; }
+    if (sel + d < 0 && tree && fileIdx > 0) { load(fileIdx - 1); select(notes.length - 1); return; }
+    select(Math.max(0, Math.min(notes.length - 1, sel + d)));
+  }
+  pre.addEventListener("click", e => { const l = e.target.closest(".ln.ann"); if (l) select(+l.dataset.o); });
+  pre.addEventListener("mouseover", e => {
+    const l = e.target.closest(".ln"); const o = l ? +l.dataset.o : -1;
+    pre.querySelectorAll(".ln").forEach(x => x.classList.toggle("hover", o >= 0 && +x.dataset.o === o));
+  });
+  pre.addEventListener("mouseleave", () => pre.querySelectorAll(".ln.hover").forEach(x => x.classList.remove("hover")));
+  load(0);
+}
+const codeData = JSON.parse($("#code-data").textContent);
+const recordData = JSON.parse($("#record-data").textContent);
+mountExplorer($('[data-explorer="code"]'), codeData, true);
+mountExplorer($('[data-explorer="record"]'), [recordData], false);
+
+/* ================= retrieval playground ================= */
+const RP = { items: [157, 151, 89, 158, 147, 163, 176, 418, 160, 120], gold: new Set([157, 158, 160]), rel: new Set([157, 158]), k: 5, missed: 1 };
+const RP_NAMES = { 157: "rescission for non-performance", 151: "obligations of the parties", 89: "conclusion of contract", 158: "agreed automatic rescission", 147: "contract is the law of the parties", 163: "liability for fault", 176: "liability for animals", 418: "definition of sale", 160: "effects of rescission", 120: "mistake" };
+function rpRender() {
+  const list = $("#rp-list"); list.innerHTML = "";
+  RP.items.forEach((a, i) => {
+    if (i === RP.k) { const c = document.createElement("div"); c.className = "rp-cut"; c.innerHTML = `<span>top-${RP.k} cut-off</span>`; list.appendChild(c); }
+    const b = document.createElement("button"); b.type = "button";
+    b.className = `rp-item${RP.rel.has(a) ? " rel" : ""}${i >= RP.k ? " out" : ""}`;
+    b.innerHTML = `<span class="rk">#${i + 1}</span><span>Art. ${a} · <span class="t-mut">${RP_NAMES[a]}</span></span><span class="st">${RP.rel.has(a) ? "relevant" : ""}</span>`;
+    b.onclick = () => { RP.rel.has(a) ? RP.rel.delete(a) : RP.rel.add(a); rpRender(); };
+    list.appendChild(b);
+  });
+  if (RP.k === RP.items.length) { const c = document.createElement("div"); c.className = "rp-cut"; c.innerHTML = `<span>top-${RP.k}</span>`; list.appendChild(c); }
+  const top = RP.items.slice(0, RP.k), relTotal = RP.rel.size + RP.missed;
+  const relTop = top.filter(a => RP.rel.has(a)).length;
+  const firstRank = RP.items.findIndex(a => RP.rel.has(a));
+  const dcg = top.reduce((s, a, i) => s + (RP.rel.has(a) ? 1 / Math.log2(i + 2) : 0), 0);
+  let idcg = 0; for (let i = 0; i < Math.min(relTotal, RP.k); i++) idcg += 1 / Math.log2(i + 2);
+  const M = [
+    ["hit@" + RP.k, relTop > 0 ? 1 : 0, "any relevant article in the top k?"],
+    ["recall@" + RP.k, relTotal ? relTop / relTotal : 0, `${relTop} found ÷ ${relTotal} needed`],
+    ["precision@" + RP.k, relTop / RP.k, `${relTop} relevant ÷ ${RP.k} shown`],
+    ["MRR", firstRank >= 0 ? 1 / (firstRank + 1) : 0, firstRank >= 0 ? `1 ÷ rank of first relevant (#${firstRank + 1})` : "no relevant article retrieved"],
+    ["nDCG@" + RP.k, idcg ? dcg / idcg : 0, "rank-weighted gain ÷ best possible"],
+  ];
+  $("#rp-metrics").innerHTML = M.map(([n, v, f]) => `<div class="mrow"><span class="mn">${n}</span><span class="bar"><i style="width:${(v * 100).toFixed(1)}%"></i></span><span class="mv">${v.toFixed(2)}</span><span class="mf">${f}</span></div>`).join("");
+  $("#rp-kv").textContent = RP.k; $("#rp-miss").textContent = RP.missed;
+}
+$("#rp-k").oninput = e => { RP.k = +e.target.value; rpRender(); };
+$("#rp-minus").onclick = () => { RP.missed = Math.max(0, RP.missed - 1); rpRender(); };
+$("#rp-plus").onclick = () => { RP.missed = Math.min(5, RP.missed + 1); rpRender(); };
+rpRender();
+
+/* ================= failure clinic ================= */
+const CASES = [
+  { s: "The answer states a ruling that appears in no retrieved article.", m: { faithfulness: .35, answer_relevancy: .9, context_precision: .85, context_recall: .9 }, drop: "faithfulness", why: "Claims not supported by the context. The most dangerous failure in law." },
+  { s: "Asked “can I terminate?”, the system pastes the full text of Articles 157–160.", m: { faithfulness: 1, answer_relevancy: .45, context_precision: .9, context_recall: .9 }, drop: "answer_relevancy", why: "Everything is true and grounded, but it does not answer the question asked." },
+  { s: "Ten articles retrieved; only one is about the question.", m: { faithfulness: .9, answer_relevancy: .85, context_precision: .2, context_recall: .9 }, drop: "context_precision", why: "The generator reads noise: more tokens, more chances to cite the wrong article." },
+  { s: "The answer needs Articles 147 and 148; only 148 was retrieved.", m: { faithfulness: .95, answer_relevancy: .85, context_precision: .95, context_recall: .5 }, drop: "context_recall", why: "Everything retrieved was relevant, and still half the law is missing." },
+  { s: "The answer cites Article 375, which was never retrieved.", m: { faithfulness: .7, answer_relevancy: .9, context_precision: .9, context_recall: .9 }, drop: "citation_grounded", extra: true, why: "A phantom citation. No RAGAS metric names it directly: the legal check does." },
+  { s: "Faithfulness is 0.95. Ship it?", m: { faithfulness: .95, answer_relevancy: .9, context_precision: .9, context_recall: .33 }, drop: "context_recall", why: "Trap. Faithful to one of three needed articles is faithful and incomplete. Always read recall next to faithfulness." },
+];
+const MINI_LABEL = { faithfulness: "faithfulness", answer_relevancy: "relevancy", context_precision: "ctx precision", context_recall: "ctx recall" };
+const clinic = $("#clinic");
+CASES.forEach(c => {
+  const b = document.createElement("button"); b.type = "button"; b.className = "case sketch";
+  const rows = Object.entries(c.m).map(([k, v]) => `<div class="mini${k === c.drop ? " drop" : ""}"><span>${MINI_LABEL[k]}</span><span class="bar"><i style="width:${v * 100}%"></i></span><span>${v.toFixed(2)}</span></div>`).join("")
+    + (c.extra ? `<div class="mini drop"><span>cite grounded</span><span class="bar"><i style="width:0%"></i></span><span>0.00</span></div>` : "");
+  b.innerHTML = `<div class="sc">${c.s}</div><div class="ask">Which metric drops? →</div><div class="reveal">${rows}<div class="why">${c.why}</div></div>`;
+  b.onclick = () => b.classList.toggle("open");
+  clinic.appendChild(b);
+});
+
+/* ================= faithfulness walk ================= */
+const fwSlide = $$(".slide").find(s => s.dataset.title === "How faithfulness is computed");
+fwSlide.addEventListener("frag", e => {
+  if (e.detail.hasAttribute("data-verify")) {
+    const cl = $$(".claim", fwSlide); const v = ["ok", "ok", "no"];
+    cl.forEach((c, i) => setTimeout(() => { c.classList.add(v[i]); c.querySelector(".v").textContent = v[i] === "ok" ? "✓" : "✗"; }, 250 * (i + 1)));
+  }
+});
+fwSlide.addEventListener("enter", () => {
+  $$(".claim", fwSlide).forEach(c => { c.classList.remove("ok", "no"); c.querySelector(".v").textContent = ""; });
+  $$(".frag", fwSlide).forEach(f => f.classList.remove("shown"));
+});
+
+/* ================= MLflow comparison (illustrative) ================= */
+const RUNS = [
+  { name: "baseline", base: true, "hit@5": .90, mrr: .81, faithfulness: .86, context_recall: .82, citation_correct: .89, p95_s: 2.9, usd_1k: 1.9 },
+  { name: "512-token chunks", "hit@5": .71, mrr: .58, faithfulness: .84, context_recall: .66, citation_correct: .52, p95_s: 3.0, usd_1k: 2.0 },
+  { name: "dense only", "hit@5": .74, mrr: .63, faithfulness: .85, context_recall: .70, citation_correct: .76, p95_s: 2.6, usd_1k: 1.8 },
+  { name: "no reranker", "hit@5": .83, mrr: .66, faithfulness: .83, context_recall: .77, citation_correct: .84, p95_s: 2.3, usd_1k: 1.9 },
+  { name: "top_k 5", "hit@5": .90, mrr: .81, faithfulness: .87, context_recall: .74, citation_correct: .88, p95_s: 2.2, usd_1k: 1.1 },
+  { name: "top_k 20", "hit@5": .90, mrr: .81, faithfulness: .82, context_recall: .86, citation_correct: .86, p95_s: 4.1, usd_1k: 3.6 },
+];
+const COLS = [["hit@5", 1], ["mrr", 1], ["faithfulness", 1], ["context_recall", 1], ["citation_correct", 1], ["p95_s", -1], ["usd_1k", -1]];
+const COL_LABEL = { "hit@5": "hit@5", mrr: "MRR", faithfulness: "faithful", context_recall: "ctx recall", citation_correct: "cite ok", p95_s: "p95", usd_1k: "$/1k q" };
+let mlSort = "faithfulness", mlBar = "citation_correct";
+function mlRender() {
+  const rows = [...RUNS].sort((a, b) => { const dir = COLS.find(c => c[0] === mlSort)[1]; return dir * (b[mlSort] - a[mlSort]); });
+  const best = {}, worst = {};
+  COLS.forEach(([c, dir]) => { const v = RUNS.map(r => r[c]); best[c] = dir > 0 ? Math.max(...v) : Math.min(...v); worst[c] = dir > 0 ? Math.min(...v) : Math.max(...v); });
+  const head = `<tr><th>run</th>${COLS.map(([c]) => `<th class="num${c === mlSort ? " sorted" : ""}" data-c="${c}">${COL_LABEL[c]}${c === mlSort ? " ↓" : ""}</th>`).join("")}</tr>`;
+  const body = rows.map(r => `<tr class="${r.base ? "base" : ""}"><td>${esc(r.name)}</td>${COLS.map(([c]) => `<td class="num${r[c] === best[c] ? " best" : r[c] === worst[c] ? " worst" : ""}">${c === "p95_s" ? r[c].toFixed(1) + "s" : c === "usd_1k" ? "$" + r[c].toFixed(1) : r[c].toFixed(2)}</td>`).join("")}</tr>`).join("");
+  const max = Math.max(...RUNS.map(r => r[mlBar]));
+  const bars = RUNS.map(r => `<div class="hbar${r.base ? " base" : ""}"><span>${esc(r.name)}</span><span class="bar"><i style="width:${(r[mlBar] / max * 100).toFixed(1)}%"></i></span><span class="mono">${r[mlBar].toFixed(2)}</span></div>`).join("");
+  $("#ml").innerHTML = `<div style="min-width:0; overflow:auto"><table class="tbl"><thead>${head}</thead><tbody>${body}</tbody></table>
+     <p class="small" style="margin-top:14px"><b>baseline</b> = per-article chunks · hybrid · reranker · top_k 10. Green = best in column, red = worst. Read 512-token chunks: faithfulness barely moves, <b>citation_correct</b> collapses.</p></div>
+     <div class="card sketch" style="gap:12px"><label for="ml-sel" class="small">chart metric</label>
+     <select id="ml-sel">${COLS.map(([c]) => `<option value="${c}"${c === mlBar ? " selected" : ""}>${c}</option>`).join("")}</select>${bars}</div>`;
+  $$("#ml th[data-c]").forEach(th => th.onclick = () => { mlSort = th.dataset.c; mlRender(); });
+  $("#ml-sel").onchange = e => { mlBar = e.target.value; mlRender(); };
+}
+mlRender();
+
+/* ================= threshold & noise simulator ================= */
+let tsSamples = [];
+function randn() { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+function tsSimulate() { const m = +$("#ts-mean").value, sd = +$("#ts-sd").value; tsSamples = Array.from({ length: 40 }, () => Math.max(0, Math.min(1, m + sd * randn()))); drawThreshold(); }
+function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function drawThreshold() {
+  const svg = $("#ts-svg"); if (!svg || !tsSamples.length) return;
+  const m = +$("#ts-mean").value, sd = +$("#ts-sd").value;
+  $("#ts-mv").textContent = m.toFixed(2); $("#ts-sv").textContent = sd.toFixed(3).replace(/0$/, "");
+  const X0 = 60, X1 = 860, lo = 0.6, hi = 1.0, x = v => X0 + (v - lo) / (hi - lo) * (X1 - X0);
+  const ink = cssVar("--ink"), muted = cssVar("--muted"), bad = cssVar("--bad"), warn = cssVar("--warn"), good = cssVar("--good"), line = cssVar("--line"), acc = cssVar("--accent");
+  let g = `<line x1="${X0}" y1="400" x2="${X1}" y2="400" stroke="${muted}" stroke-width="1.5"/>`;
+  for (let v = 0.6; v <= 1.0001; v += 0.05) g += `<line x1="${x(v)}" y1="400" x2="${x(v)}" y2="408" stroke="${muted}"/><text x="${x(v)}" y="432" text-anchor="middle" font-size="17" fill="${muted}">${v.toFixed(2)}</text>`;
+  g += `<rect x="${x(lo)}" y="40" width="${x(0.75) - x(lo)}" height="350" fill="${bad}" opacity="0.08"/>`;
+  g += `<line x1="${x(0.75)}" y1="30" x2="${x(0.75)}" y2="400" stroke="${bad}" stroke-width="3" stroke-dasharray="8 6"/><text x="${x(0.75) - 8}" y="26" text-anchor="end" font-size="18" font-weight="600" fill="${bad}">CI floor 0.75</text>`;
+  g += `<line x1="${x(0.80)}" y1="30" x2="${x(0.80)}" y2="400" stroke="${warn}" stroke-width="3" stroke-dasharray="3 5"/><text x="${x(0.80) + 8}" y="26" font-size="18" font-weight="600" fill="${warn}">prod alert 0.80</text>`;
+  g += `<line x1="${x(m)}" y1="60" x2="${x(m)}" y2="400" stroke="${acc}" stroke-width="2"/><text x="${x(m)}" y="460" text-anchor="middle" font-size="17" font-weight="600" fill="${acc}">true quality</text>`;
+  const bins = {};
+  tsSamples.forEach(v => { const b = Math.round(v * 200) / 200; bins[b] = (bins[b] || 0) + 1; const yy = 388 - (bins[b] - 1) * 17;
+    g += `<circle cx="${x(b)}" cy="${yy}" r="7.5" fill="${v < 0.75 ? bad : good}" stroke="${cssVar("--paper")}" stroke-width="1.5"/>`; });
+  svg.innerHTML = g;
+  const fails = tsSamples.filter(v => v < 0.75).length;
+  const pct = Math.round(fails / tsSamples.length * 100);
+  $("#ts-out").innerHTML = m >= 0.75
+    ? `<span style="color:${fails ? bad : good}">${pct}% of runs fail</span><br><span class="small">a PR that is actually ${m >= 0.8 ? "good" : "acceptable"}</span>`
+    : `<span style="color:${good}">${100 - pct}% of runs pass</span><br><span class="small">a PR that is actually below the floor</span>`;
+}
+$("#ts-mean").oninput = tsSimulate; $("#ts-sd").oninput = tsSimulate; $("#ts-again").onclick = tsSimulate;
+tsSimulate();
+
+/* ================= boot ================= */
+const fromHash = () => { const m = /^#s(\d+)$/.exec(location.hash); return m ? +m[1] - 1 : 0; };
+window.addEventListener("hashchange", () => show(fromHash(), true));
+show(fromHash(), true);
+timer.paint();
+})();
+</script>
+<!--HEAD-->
+</body>
+</html>
+<!--/HEAD-->

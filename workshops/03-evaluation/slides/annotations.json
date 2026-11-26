@@ -1,0 +1,394 @@
+{
+ "files": [
+  {
+   "path": "evaluation/__main__.py",
+   "label": "__main__.py",
+   "tag": "the whole flow",
+   "summary": "One command runs the exam: ask every question, score the answers four ways, log the run, print the numbers.",
+   "notes": [
+    {
+     "anchor": "async def run(",
+     "until": "await client.aclose()",
+     "title": "Step 1: ask the system",
+     "body": "Load the golden set, then send every question to the running W2 API. The system configuration (<code>top_k</code>, reranker, retrieval mode) travels with the request, so one API can be evaluated under many configurations."
+    },
+    {
+     "anchor": "metrics: dict[str, float] = {\"error_rate\"",
+     "until": "bilingual_agreement(records",
+     "title": "Step 2: the free scorers",
+     "body": "Error rate, retrieval metrics, legal checks and the bilingual test are plain Python. No tokens, no randomness. They run first and they run on every commit."
+    },
+    {
+     "anchor": "if not args.skip_ragas",
+     "until": "metrics |= await score_ragas",
+     "title": "Step 3: the paid scorer",
+     "body": "RAGAS calls an LLM judge for every question and metric. <code>--skip-ragas</code> exists so you can iterate on retrieval for free and only pay for the judge when it matters."
+    },
+    {
+     "anchor": "params = {**system",
+     "until": "golden_set_fingerprint(args.golden)}",
+     "title": "Step 4: record what you tested",
+     "body": "Everything that could change a score is a parameter: system config, judge model, number of questions, and a hash of the golden set. Two runs are only comparable if these match."
+    },
+    {
+     "anchor": "log_run(args.run_name",
+     "until": "log_run(args.run_name",
+     "title": "Step 5: log it",
+     "body": "One MLflow run per evaluation, plus <code>report.json</code> on disk for the CI gate to read."
+    },
+    {
+     "anchor": "g = sub.add_parser(\"gate\"",
+     "until": "g.add_argument(\"--baseline\"",
+     "title": "The gate command",
+     "body": "<code>python -m evaluation gate report.json</code> exits 1 if any threshold breaks. That exit code is the whole interface to CI in Workshop 5."
+    }
+   ]
+  },
+  {
+   "path": "evaluation/golden_set.py",
+   "label": "golden_set.py",
+   "tag": "what we test on",
+   "summary": "The golden set schema. Pydantic validates every record before a single token is spent.",
+   "notes": [
+    {
+     "anchor": "class QuestionType",
+     "until": "OUT_OF_SCOPE =",
+     "title": "Question types are part of the schema",
+     "body": "Every question is tagged with what it tests. This lets you report scores per type: a system can ace lookups and fail every repealed article, and the average hides it."
+    },
+    {
+     "anchor": "class GoldenItem",
+     "until": "pair_id: str | None",
+     "title": "One record",
+     "body": "<code>gold_articles</code> is what makes legal RAG easy to evaluate: the right answer rests on article numbers, so retrieval can be scored by ID match. <code>pair_id</code> links the Arabic and English versions of the same question."
+    },
+    {
+     "anchor": "@model_validator",
+     "until": "return self",
+     "title": "Validation catches bad exam questions",
+     "body": "A question with no gold articles silently scores 0 on retrieval forever. The validator makes that a loud error unless the question is out of scope on purpose."
+    },
+    {
+     "anchor": "def load_golden_set",
+     "until": "return items[:limit]",
+     "title": "Loading",
+     "body": "JSONL: one record per line, easy to diff in a PR. <code>limit</code> is how we keep the room to 20 questions."
+    },
+    {
+     "anchor": "def golden_set_fingerprint",
+     "until": "hexdigest()",
+     "title": "Fingerprint",
+     "body": "A short hash of the file, logged with every run. If someone edits the golden set, old and new scores are no longer comparable, and MLflow shows it."
+    }
+   ]
+  },
+  {
+   "path": "evaluation/client.py",
+   "label": "client.py",
+   "tag": "talks to W2",
+   "summary": "The only place the evaluator touches the RAG system. Swap it to evaluate any implementation.",
+   "notes": [
+    {
+     "anchor": "class Context",
+     "until": "score: float | None",
+     "title": "Contexts, not just citations",
+     "body": "RAGAS needs the article text the generator actually saw. The W2 response must expose it: design your API to be evaluable."
+    },
+    {
+     "anchor": "class RagClient(Protocol)",
+     "until": "async def ask",
+     "title": "A protocol, not a dependency",
+     "body": "The evaluator depends on this one method. An in-process client, an HTTP client or a fake for tests all fit."
+    },
+    {
+     "anchor": "class HttpRagClient",
+     "until": "return RagResult.model_validate",
+     "title": "HTTP client for /ask",
+     "body": "Adds <code>return_contexts</code> plus the experiment options to every request and validates the response shape. <b>Adapt here</b> when the W2 API contract changes."
+    }
+   ]
+  },
+  {
+   "path": "evaluation/runner.py",
+   "label": "runner.py",
+   "tag": "asks every question",
+   "summary": "Asks every golden question with bounded concurrency and keeps everything the system returned.",
+   "notes": [
+    {
+     "anchor": "class Record",
+     "until": "scores: dict",
+     "title": "A record is the unit of evaluation",
+     "body": "Question, answer, contexts, latency, error and a <code>scores</code> dict that each scorer fills in. Keeping per-question scores is what lets you answer <i>why</i> a number moved."
+    },
+    {
+     "anchor": "def retrieved_articles",
+     "until": "return [c.article_number",
+     "title": "Article IDs in rank order",
+     "body": "Retrieval metrics only need this list. Rank order matters for MRR and nDCG."
+    },
+    {
+     "anchor": "gate = asyncio.Semaphore",
+     "until": "gate = asyncio.Semaphore",
+     "title": "Bounded concurrency",
+     "body": "Four requests at a time: fast enough, and it will not trip the LLM provider's rate limit with a shared workshop key."
+    },
+    {
+     "anchor": "except Exception as exc",
+     "until": "return Record(item=item, error=",
+     "title": "Failures are data",
+     "body": "One timeout must not kill a 20-minute run. Errors are recorded per question and reported as <code>error_rate</code>, which the gate caps at zero."
+    }
+   ]
+  },
+  {
+   "path": "evaluation/retrieval_metrics.py",
+   "label": "retrieval_metrics.py",
+   "tag": "free · deterministic",
+   "summary": "Classic IR metrics on article IDs. No LLM involved.",
+   "notes": [
+    {
+     "anchor": "def hit_at_k",
+     "until": "return 1.0 if gold",
+     "title": "hit@k",
+     "body": "Did at least one gold article make the top k? The bluntest and most useful number for a lookup question."
+    },
+    {
+     "anchor": "def recall_at_k",
+     "until": "return len(gold & set(retrieved[:k])) / len(gold)",
+     "title": "recall@k",
+     "body": "What fraction of the needed articles made the top k. This is what drops on multi-article questions."
+    },
+    {
+     "anchor": "def precision_at_k",
+     "until": "return sum(a in gold",
+     "title": "precision@k",
+     "body": "What fraction of the top k is useful. Low precision means the generator reads noise, which costs tokens and invites confusion."
+    },
+    {
+     "anchor": "def reciprocal_rank",
+     "until": "return 0.0",
+     "title": "MRR",
+     "body": "1 / rank of the first gold article. Rewards putting the right article first, which is what the reranker is for."
+    },
+    {
+     "anchor": "def ndcg_at_k",
+     "until": "return dcg / ideal",
+     "title": "nDCG@k",
+     "body": "Rank-weighted gain divided by the best possible ordering. 1.0 means every gold article is at the top."
+    },
+    {
+     "anchor": "def score_retrieval",
+     "until": "return {n: mean",
+     "title": "Per question, then the mean",
+     "body": "Scores go into each record first, then get averaged. Out-of-scope questions have no gold articles, so they are skipped instead of counted as zero."
+    }
+   ]
+  },
+  {
+   "path": "evaluation/legal_checks.py",
+   "label": "legal_checks.py",
+   "tag": "free · domain rules",
+   "summary": "Rules a lawyer would check first. Plain regex, because a citation is right or wrong.",
+   "notes": [
+    {
+     "anchor": "_ARABIC_DIGITS",
+     "until": "_REFUSAL = ",
+     "title": "Patterns for both languages",
+     "body": "Arabic-Indic digits (١٤٧) are normalised to 147. The citation pattern covers <code>المادة</code>, <code>للمادة</code>, <code>Article</code> and <code>Art.</code>"
+    },
+    {
+     "anchor": "def cited_articles",
+     "until": "return {int(",
+     "title": "Which articles did the answer cite?",
+     "body": "<code>cited_articles(\"وفقاً للمادة ١٤٧\")</code> returns <code>{147}</code>. Everything below builds on this set."
+    },
+    {
+     "anchor": "\"citation_grounded\"",
+     "until": "\"citation_grounded\"",
+     "title": "Phantom citations",
+     "body": "Cited articles must be a subset of retrieved articles. An article the model never saw came from its memory: in law that is the most dangerous kind of answer."
+    },
+    {
+     "anchor": "\"repeal_flagged\"",
+     "until": "\"refused_out_of_scope\"",
+     "title": "Repealed and out of scope",
+     "body": "For a repealed article the only correct answer says so. For a criminal-law question the correct answer is a refusal. These are behaviours, so they get their own metrics."
+    },
+    {
+     "anchor": "if value is not None:",
+     "until": "per_metric.setdefault",
+     "title": "Not applicable is not zero",
+     "body": "<code>None</code> means the check does not apply to this question. Counting it as 0 would quietly drag every average down."
+    }
+   ]
+  },
+  {
+   "path": "evaluation/bilingual.py",
+   "label": "bilingual.py",
+   "tag": "free · AR vs EN",
+   "summary": "Same question in Arabic and English: do we retrieve the same articles?",
+   "notes": [
+    {
+     "anchor": "pairs: dict[str, dict[str, Record]]",
+     "until": "complete = ",
+     "title": "Group by pair_id",
+     "body": "Every question exists in both languages, linked by <code>pair_id</code>. Pairs where either side errored are dropped."
+    },
+    {
+     "anchor": "top1_same += ",
+     "until": "overlap += ",
+     "title": "Agreement",
+     "body": "Top-1 agreement and Jaccard overlap of the top k. A good multilingual embedder gives nearly identical lists."
+    },
+    {
+     "anchor": "f\"hit@{k}_ar_minus_en\"",
+     "until": "f\"hit@{k}_ar_minus_en\"",
+     "title": "The headline number",
+     "body": "Negative means Arabic retrieval is worse than English on the same questions. That gap is invisible if you only test in one language."
+    }
+   ]
+  },
+  {
+   "path": "evaluation/ragas_eval.py",
+   "label": "ragas_eval.py",
+   "tag": "LLM judge · costs tokens",
+   "summary": "The four RAGAS metrics, using the ragas 0.4 metrics.collections API and any OpenAI-compatible endpoint.",
+   "notes": [
+    {
+     "anchor": "def build_judge",
+     "until": "return llm_factory",
+     "title": "The judge is its own model choice",
+     "body": "Same <code>LLM_BASE_URL</code> as the generator, but <code>JUDGE_MODEL</code> can differ. Prefer a different model family from the generator to reduce self-preference bias, and log it: a new judge means new scores."
+    },
+    {
+     "anchor": "def build_metrics",
+     "until": "\"context_recall\": ContextRecall",
+     "title": "Four metrics, two sides",
+     "body": "Faithfulness and answer relevancy judge the generator. Context precision and recall judge the retriever, using the reference answer. Answer relevancy also needs embeddings: a multilingual model, because questions are Arabic."
+    },
+    {
+     "anchor": "inputs = {",
+     "until": "    }",
+     "title": "Each metric reads different fields",
+     "body": "Faithfulness never sees the reference. Context recall never sees the answer. Knowing the inputs tells you what a metric can and cannot catch."
+    },
+    {
+     "anchor": "except Exception:",
+     "until": "r.scores[name] = None",
+     "title": "A judge failure is unknown, not zero",
+     "body": "Judges time out and return malformed JSON. Recording <code>None</code> keeps a flaky judge from looking like a bad system."
+    },
+    {
+     "anchor": "todo = [r for r in records",
+     "until": "todo = [r for r in records",
+     "title": "Skip what does not apply",
+     "body": "Out-of-scope questions have no supporting articles, so context metrics are meaningless for them. Their correctness is checked by <code>refused_out_of_scope</code> instead."
+    }
+   ]
+  },
+  {
+   "path": "evaluation/tracking.py",
+   "label": "tracking.py",
+   "tag": "MLflow",
+   "summary": "Each evaluation becomes an MLflow run you can compare, with the per-question file attached.",
+   "notes": [
+    {
+     "anchor": "def write_per_question",
+     "until": "return path",
+     "title": "The file you open when a score drops",
+     "body": "One row per question with its scores and answer. Averages tell you <i>that</i> something broke; this file tells you <i>which question</i> and <i>why</i>."
+    },
+    {
+     "anchor": "out_dir.mkdir",
+     "until": "report.write_text",
+     "title": "Files first",
+     "body": "<code>report.json</code> is written before MLflow is touched, so the CI gate still works if the tracking server is down."
+    },
+    {
+     "anchor": "mlflow.set_tags",
+     "until": "mlflow.log_metrics",
+     "title": "Params, metrics, tags",
+     "body": "Params are what you changed. Metrics are what you got. Tags hold the git SHA and golden-set hash so any number can be traced back to exact code and exact questions."
+    }
+   ]
+  },
+  {
+   "path": "evaluation/gate.py",
+   "label": "gate.py",
+   "tag": "CI decision",
+   "summary": "Reads report.json and thresholds.toml, prints failures, exits 0 or 1.",
+   "notes": [
+    {
+     "anchor": "failures.append(f\"{name}: missing from report\")",
+     "until": "missing from report",
+     "title": "Silent metrics fail",
+     "body": "If a scorer crashed and a metric is missing, the gate fails. A gate that passes when it cannot see is decoration."
+    },
+    {
+     "anchor": "elif value < minimum",
+     "until": "failures.append(f\"{name}: {value:.3f} < floor",
+     "title": "Absolute floors",
+     "body": "Faithfulness must stay above 0.75, whatever the baseline. This is the line no PR may cross."
+    },
+    {
+     "anchor": "elif baseline and name in baseline",
+     "until": "dropped",
+     "title": "Regression vs main",
+     "body": "Also fail when a metric drops more than <code>max_drop</code> below the main branch, even if still above the floor. Slow decay is caught one PR at a time."
+    },
+    {
+     "anchor": "return 1 if failures else 0",
+     "until": "return 1 if failures else 0",
+     "title": "The exit code is the interface",
+     "body": "CI only understands exit codes. Workshop 5 wires this into GitHub Actions so a red gate blocks the merge."
+    }
+   ]
+  }
+ ],
+ "record": {
+  "notes": [
+   {
+    "anchor": "\"id\"",
+    "until": "\"id\"",
+    "title": "Stable id",
+    "body": "Never reuse an id. Per-question results are compared across runs by id."
+   },
+   {
+    "anchor": "\"question\"",
+    "until": "\"question\"",
+    "title": "Written like a real user",
+    "body": "Avoid copying the article's wording into the question: that makes BM25 look brilliant and tests nothing."
+   },
+   {
+    "anchor": "\"language\"",
+    "until": "\"language\"",
+    "title": "Language",
+    "body": "Lets you report every metric for Arabic and English separately."
+   },
+   {
+    "anchor": "\"type\"",
+    "until": "\"type\"",
+    "title": "What it tests",
+    "body": "<code>repealed</code>: the correct answer is that Article 60 has no text in force. A system that answers it confidently fails, however fluent it sounds."
+   },
+   {
+    "anchor": "\"reference_answer\"",
+    "until": "\"reference_answer\"",
+    "title": "Reference answer",
+    "body": "Written or approved by a lawyer. Context precision and recall compare against it. Faithfulness does not use it."
+   },
+   {
+    "anchor": "\"gold_articles\"",
+    "until": "\"gold_articles\"",
+    "title": "Gold articles",
+    "body": "The article numbers a correct answer must rest on. These make retrieval scoring free and deterministic."
+   },
+   {
+    "anchor": "\"pair_id\"",
+    "until": "\"pair_id\"",
+    "title": "Bilingual pair",
+    "body": "Links this question to its English twin, <code>q007-en</code>, for the bilingual ablation."
+   }
+  ]
+ }
+}

@@ -1,5 +1,10 @@
 # Slides — Workshop 3: RAG Evaluation
 
-*RAGAS · golden sets · MLflow experiments*
+*Golden sets · retrieval metrics · RAGAS · MLflow · quality gates*
 
-https://claude.ai/artifact/PYnKQ9vs7zX3EQQZEkNzZj
+**Interactive deck:** [`slides/index.html`](slides/index.html). Download it and open it in a browser. It is a single
+self-contained file that works offline (fonts fall back to system fonts without internet).
+
+Rebuild after changing code, diagrams or notes: `cd slides && python build.py`.
+
+Earlier outline deck: https://claude.ai/artifact/PYnKQ9vs7zX3EQQZEkNzZj

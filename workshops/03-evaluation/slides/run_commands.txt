@@ -1,0 +1,21 @@
+# 0 · once: dependencies + where MLflow writes
+uv sync
+export MLFLOW_TRACKING_URI=sqlite:///mlflow.db
+
+# 1 · the system under test: your W2 API,
+#     or the mock with five planted mistakes
+uv run python mock_rag_api.py
+
+# 2 · free scorers only (retrieval, legal, AR/EN)
+uv run python -m evaluation run --skip-ragas \
+    --run-name mock
+
+# 3 · add the 4 RAGAS metrics (costs tokens)
+uv run python -m evaluation run --limit 20 \
+    --run-name hybrid-k10
+
+# 4 · the CI decision: exit 0 or exit 1
+uv run python -m evaluation gate reports/eval/report.json
+
+# 5 · compare runs
+uv run mlflow ui --backend-store-uri sqlite:///mlflow.db

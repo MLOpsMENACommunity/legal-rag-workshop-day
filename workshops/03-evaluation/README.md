@@ -2,7 +2,9 @@
 
 *RAGAS · golden sets · MLflow experiments*
 
-**60 minutes · 13:25 – 14:25** · [Slides](SLIDES.md)
+**45 minutes** · [Slides](SLIDES.md) · interactive deck: [`slides/index.html`](slides/index.html)
+
+> Timing note: [AGENDA.md](../../AGENDA.md) still reserves 60 minutes (13:25 – 14:25) for this slot. The deck is planned for 45; the spare 15 minutes can go to the hands-on run or to W4.
 
 ## Goal
 
@@ -73,17 +75,35 @@ Runs in the room (each table takes one, compared on screen):
 
 The payoff: **participants see that the W1 and W2 decisions were right — by the numbers, not by assertion.**
 
-## Timeline
+## Materials
 
-| Time | Activity |
-|------|----------|
-| 10 min | Why eyeballing is not evaluation + evaluation vs observability vs guardrails |
-| 10 min | The golden set: reference benchmark + two questions from each participant |
-| 15 min | **Hands-on:** RAGAS on the first 20 questions |
-| **checkpoint** | Everyone has four numbers |
-| 10 min | Bilingual ablation — the same question in both languages |
-| 10 min | MLflow: each table logs a run; compare on screen |
-| 5 min | Thresholds: why 0.75 in CI and 0.80 for alerts? |
+| Folder | Contents |
+|--------|----------|
+| [`slides/`](slides/) | `index.html`: the interactive deck. One offline file: open it in a browser, no network needed |
+| [`code/`](code/) | The evaluation module shown in the deck, tests, seed golden set, and a mock `/ask` API |
+| [`diagrams/`](diagrams/) | The Excalidraw diagrams as editable `.excalidraw` files, built from [libraries.excalidraw.com](https://libraries.excalidraw.com) icons |
+
+Deck keys: `→` next step, `N` speaker notes (with per-slide timing), `O` overview, `T` timer, `D` dark mode, `F` fullscreen.
+On the code slides, click a file, then any highlighted line to see what it does.
+
+## Timeline (45 min)
+
+| Min | Slides | Activity |
+|-----|--------|----------|
+| 3 | 1–3 | Where we are in the day · the eyeball test: three W2 answers that look right and are wrong |
+| 4.5 | 4–6 | Evaluation vs observability vs guardrails · no universal metric · where RAG breaks |
+| 5.5 | 7–9 | The golden set: sources, one record field by field, coverage and pitfalls |
+| 4.5 | 10–11 | The four questions (RAGAS triad + recall) · **live retrieval-metrics playground** |
+| 9 | 12–16 | LLM-as-judge and its biases · faithfulness step by step · the other three metrics · failure clinic · legal checks in plain code |
+| 2 | 17 | Bilingual ablation |
+| **checkpoint** | | Everyone has seen the four RAGAS numbers and the free metrics |
+| 6 | 18–20 | Module structure · clickable code walkthrough · run it (real output from the mock API) |
+| 3.5 | 21–22 | MLflow: what to log · comparing runs |
+| 2.5 | 23 | Thresholds: why 0.75 in CI and 0.80 for alerts (noise simulator) |
+| 2 | 24–25 | Eval-driven development loop · takeaways and acceptance check |
+
+With 45 minutes the hands-on is a demo: run `python -m evaluation run --skip-ragas` against the mock API on screen.
+If the slot stays at 60 minutes, give the extra 15 to the room running it themselves against their own W2 API.
 
 ## Acceptance check
 

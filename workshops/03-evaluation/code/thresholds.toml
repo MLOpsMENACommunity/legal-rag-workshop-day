@@ -1,0 +1,18 @@
+# Thresholds for the CI gate (Workshop 5). A PR that breaks any of them cannot merge.
+#
+# Why 0.75 here and 0.80 for production alerts?
+#  - CI runs 20 questions with an LLM judge: noisy, so the floor sits below the baseline
+#    minus the run-to-run noise we measured (run the same config 3x and look at the spread).
+#  - Production alerts watch a rolling average over many real requests: less noisy, so they
+#    can be tighter, and they fire *before* quality reaches the release floor.
+
+max_drop = 0.05          # also fail if any floored metric falls more than this vs. the main-branch report
+
+[floors]                 # higher is better: value must be >= floor
+faithfulness = 0.75      # the dangerous failure in law: an invented ruling
+context_recall = 0.70    # faithful but incomplete is still wrong
+"hit@5" = 0.85           # free to compute, so hold it high
+citation_grounded = 0.95 # phantom citations are close to unacceptable
+
+[ceilings]               # lower is better: value must be <= ceiling
+error_rate = 0.0
