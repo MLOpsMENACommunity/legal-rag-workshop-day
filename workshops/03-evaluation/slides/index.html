@@ -45,8 +45,8 @@ body { margin: 0; background: var(--paper-2); color: var(--ink); font-family: va
 button { font: inherit; color: inherit; }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
-.viewport { position: fixed; inset: 0; display: grid; place-items: center; }
-.stage { width: 1600px; height: 900px; position: relative; flex: none; transform-origin: center center;
+.viewport { position: fixed; inset: 0; overflow: hidden; }
+.stage { width: 1600px; height: 900px; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) scale(0.25); transform-origin: center center;
   background-color: var(--paper);
   background-image: radial-gradient(var(--dot) 1.2px, transparent 1.3px); background-size: 28px 28px;
   box-shadow: 0 10px 40px rgba(20, 30, 50, .12); overflow: hidden; }
@@ -111,6 +111,7 @@ table.tbl { border-collapse: collapse; width: 100%; font-size: 24px; }
 .notes-drawer h4 { margin: 0 0 8px; font: 600 13px/1 var(--f-body); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
 .notes-drawer ul { margin: 0; padding-left: 20px; } .notes-drawer li { font-size: 17px; margin: 4px 0; }
 aside.notes { display: none; }
+.rotate-hint { position: fixed; z-index: 19; left: 50%; transform: translateX(-50%); top: calc(64px + env(safe-area-inset-top, 0px)); background: var(--paper); border: 1.5px solid var(--line); border-radius: 999px; padding: 8px 14px; font: 500 14px/1.2 var(--f-body); color: var(--muted); white-space: nowrap; }
 .overview { position: fixed; inset: 0; z-index: 30; background: color-mix(in srgb, var(--paper-2) 94%, transparent); overflow: auto;
   padding: calc(60px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 40px max(16px, env(safe-area-inset-left, 0px)); }
 .overview-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
@@ -249,6 +250,12 @@ aside.notes { display: none; }
 .term { background: #11151c; color: #d7dde8; border-radius: 12px; padding: 18px 22px; font: 15.5px/1.55 var(--f-code); overflow: auto; white-space: pre; min-height: 0; }
 .term .c { color: #8b95a7; } .term .p { color: #8ce99a; } .term .f { color: #ff8fab; font-weight: 600; } .term .ok { color: #8ce99a; font-weight: 600; }
 
+/* small screens: compact controls that stay out of the slide */
+@media (max-height: 520px), (max-width: 760px) {
+  .hud { gap: 5px; font-size: 12px; opacity: .85; }
+  .hud button, .hud .pill { padding: 5px 9px; }
+  #timer, #b-notes, #b-theme { display: none; }
+}
 @media (prefers-reduced-motion: reduce) { .frag, .bar > i, .progress { transition: none; } }
 </style>
 </head>
@@ -871,6 +878,7 @@ repeal_flagged                   0.000
   <button type="button" id="b-prev" aria-label="Previous slide">←</button>
   <button type="button" id="b-next" aria-label="Next slide">→</button>
 </div>
+<div class="rotate-hint" id="rotate-hint" hidden>Turn your phone sideways · swipe to change slides</div>
 <div class="notes-drawer" id="notes" hidden></div>
 <div class="overview" id="overview" hidden><div class="overview-grid" id="overview-grid"></div></div>
 <div class="help" id="help" hidden>
@@ -902,11 +910,17 @@ const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&
 
 /* ================= stage scaling ================= */
 const stage = $("#stage");
+const vp = $("#viewport");
 function fit() {
-  const s = Math.min(window.innerWidth / 1600, window.innerHeight / 900);
-  stage.style.transform = `scale(${s})`;
+  const w = vp.clientWidth || window.innerWidth, h = vp.clientHeight || window.innerHeight;
+  if (!w || !h) return;                      // frame not laid out yet: the observer calls again
+  const s = Math.min(w / 1600, h / 900);
+  stage.style.transform = `translate(-50%, -50%) scale(${s})`;
+  $("#rotate-hint").hidden = !(h > w * 1.2 && w < 700);
 }
-window.addEventListener("resize", fit); fit();
+window.addEventListener("resize", fit);
+if (window.ResizeObserver) new ResizeObserver(fit).observe(vp);
+window.addEventListener("load", fit); fit();
 
 /* ================= navigation ================= */
 const slides = $$(".slide");
@@ -955,6 +969,18 @@ document.addEventListener("keydown", e => {
   else if (k === "Escape") ["#notes", "#overview", "#help"].forEach(s => $(s).hidden = true);
 });
 $("#b-next").onclick = next; $("#b-prev").onclick = prev;
+/* swipe left/right on touch screens; ignored inside code panes, sliders and tables that scroll */
+let touch = null;
+document.addEventListener("touchstart", e => {
+  if (e.touches.length !== 1 || e.target.closest(".cx-code, .term, input, select, .ml, .overview, .notes-drawer")) { touch = null; return; }
+  touch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+}, { passive: true });
+document.addEventListener("touchend", e => {
+  if (!touch) return;
+  const dx = e.changedTouches[0].clientX - touch.x, dy = e.changedTouches[0].clientY - touch.y;
+  touch = null;
+  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) dx < 0 ? next() : prev();
+}, { passive: true });
 $("#b-notes").onclick = () => toggle("#notes");
 $("#b-over").onclick = () => toggle("#overview");
 $("#b-theme").onclick = cycleTheme;
