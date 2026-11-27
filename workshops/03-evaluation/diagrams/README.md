@@ -10,6 +10,13 @@ Hand-drawn diagrams for the deck, built as real `.excalidraw` files from communi
 | `libraries/` | The `.excalidrawlib` files used, from [libraries.excalidraw.com](https://libraries.excalidraw.com) |
 | `tools/export_svg.js` | Headless export (Playwright + `@excalidraw/excalidraw` `exportToSvg`) |
 
+## Build steps
+
+Each diagram is drawn at slide scale (about 1440 px wide, text 19–34 px) and split into steps with `s.step()` in
+`build_diagrams.py`. Step 0 draws when the slide opens; each `→` draws the next step, stroke by stroke. The step is stored
+in each element's `customData.step`, so it survives editing on excalidraw.com, and the exporter turns it into
+`<g class="xs" data-step="N">` groups in the SVG.
+
 ## Rebuild
 
 ```bash

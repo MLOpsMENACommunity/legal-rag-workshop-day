@@ -25,9 +25,18 @@ const server = http.createServer((req, res) => {
   for (const f of files) {
     const scene = JSON.parse(fs.readFileSync(path.join(SRC, f), 'utf8'));
     const svg = await page.evaluate(async (scene) => {
+      // the exporter wraps a linked element in <a href>: use that to tag each element with its build step
+      const elements = scene.elements.map(e => ({ ...e, link: `#step-${(e.customData && e.customData.step) || 0}` }));
       const el = await window.exportToSvg({
-        elements: scene.elements, files: scene.files || {},
+        elements, files: scene.files || {},
         appState: { exportBackground: false, exportPadding: 16, viewBackgroundColor: '#ffffff' },
+      });
+      el.querySelectorAll('a').forEach((a, i) => {
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('class', 'xs');
+        g.setAttribute('data-step', a.getAttribute('href').replace('#step-', ''));
+        while (a.firstChild) g.appendChild(a.firstChild);
+        a.replaceWith(g);
       });
       return el.outerHTML;
     }, scene);

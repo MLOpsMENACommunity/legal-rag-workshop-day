@@ -65,7 +65,7 @@ h3 { font-size: 30px; line-height: 1.2; }
 p, li { font-size: 27px; line-height: 1.45; margin: 0; }
 .lede { font-size: 30px; line-height: 1.4; color: var(--muted); max-width: 62ch; }
 .small { font-size: 21px; color: var(--muted); }
-mark { background: linear-gradient(100deg, transparent 0 2%, var(--mark) 3% 97%, transparent 98%); color: inherit; padding: 0 .18em; border-radius: 3px; }
+mark { background-image: linear-gradient(var(--mark), var(--mark)); background-repeat: no-repeat; background-size: 100% 100%; color: inherit; padding: 0 .18em; border-radius: 3px; }
 code, .mono { font-family: var(--f-code); font-size: .86em; }
 p code, li code, td code { background: var(--code-bg); padding: .08em .35em; border-radius: 5px; border: 1px solid var(--line); }
 [lang="ar"], .ar { font-family: var(--f-ar); direction: rtl; unicode-bidi: isolate; }
@@ -258,7 +258,80 @@ aside.notes { display: none; }
   .hud button, .hud .pill { padding: 5px 9px; }
   #timer, #b-notes, #b-theme { display: none; }
 }
-@media (prefers-reduced-motion: reduce) { .frag, .bar > i, .progress { transition: none; } }
+
+/* ---------- animation: slide entrance ---------- */
+.slide.enter { animation: slideIn .4s ease-out both; }
+.slide.enter.back { animation-name: slideInBack; }
+@keyframes slideIn { from { opacity: 0; transform: translateX(28px); } }
+@keyframes slideInBack { from { opacity: 0; transform: translateX(-28px); } }
+.slide.enter .kicker { animation: kickerIn .5s .05s ease-out both; }
+@keyframes kickerIn { from { opacity: 0; transform: translateX(-36px); } }
+.slide.enter h1, .slide.enter h2 { animation: writeOn 1s .12s cubic-bezier(.55,.05,.3,1) both; }
+@keyframes writeOn { from { clip-path: inset(-15% 100% -25% 0); } to { clip-path: inset(-15% 0 -25% 0); } }
+.slide.enter .rise { animation: rise .6s cubic-bezier(.2,.8,.3,1) both; animation-delay: calc(.4s + var(--i, 0) * .09s); }
+@keyframes rise { from { opacity: 0; transform: translateY(22px) rotate(-.5deg); } }
+.slide.enter mark { animation: markSweep .8s 1.1s ease-out both; }
+.frag.shown mark { animation: markSweep .8s .3s ease-out both; }
+@keyframes markSweep { from { background-size: 0% 100%; } to { background-size: 100% 100%; } }
+.slide.enter .stamp:not(.bad) { animation: slam .5s both; animation-delay: calc(1s + var(--i, 0) * .09s); }
+.verdict.shown .stamp.bad { animation: slam .5s .05s both; }
+@keyframes slam { 0% { opacity: 0; transform: scale(2.4) rotate(-16deg); } 60% { opacity: 1; transform: scale(.9) rotate(-2deg); } 100% { transform: rotate(-4deg); } }
+.claim.frag:not(.shown) { transform: translateX(-60px); }
+.claim .v { transition: transform .35s cubic-bezier(.3,1.6,.5,1); }
+.claim.ok .v, .claim.no .v { animation: pop .45s cubic-bezier(.3,1.6,.5,1) both; }
+@keyframes pop { from { transform: scale(0) rotate(-30deg); } }
+.claim.no { animation: shake .5s .1s both; }
+@keyframes shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+.xs.pending { opacity: 0; }
+.term .tl { display: inline; }
+.bar > i { transition: width .9s cubic-bezier(.2,.8,.3,1); }
+
+/* ---------- 3D flip cards (after the friend's pricing card) ---------- */
+.cols-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; }
+.flip { perspective: 1400px; cursor: pointer; min-height: 0; position: relative; }
+.flip-inner { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .9s cubic-bezier(.3,.7,.2,1); }
+.flip:hover .flip-inner { transform: rotateY(-7deg) rotateX(3deg); }
+.flip.flipped .flip-inner { transform: rotateY(180deg); }
+.flip.flipped:hover .flip-inner { transform: rotateY(173deg) rotateX(3deg); }
+.face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; transform-style: preserve-3d;
+  padding: 22px 24px; display: flex; flex-direction: column; gap: 12px; align-items: flex-start; overflow: hidden; }
+.face > * { transform: translateZ(28px); backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.face h3 { transform: translateZ(48px); font-size: 38px; }
+.face.front { justify-content: flex-start; gap: 18px; padding-top: 26px; }
+.face.front p { font-size: 25px; line-height: 1.4; }
+.face p { font-size: 22px; } .face li { font-size: 21px; } .face .small { font-size: 19px; }
+.face ol { margin: 0; padding-left: 26px; display: grid; gap: 8px; }
+.face.back { transform: rotateY(180deg); background: var(--paper-2); }
+.big-q { font-size: 30px !important; line-height: 1.35; }
+.flip-hint { margin-top: auto; font: 600 15px/1 var(--f-body); color: var(--accent); letter-spacing: .04em; }
+.flip-hint::after { content: ""; }
+.flip .face.front .flip-hint { animation: nudge 2.4s 2s ease-in-out infinite; }
+@keyframes nudge { 0%, 70%, 100% { transform: translateZ(28px); } 80% { transform: translateZ(28px) translateX(6px); } 90% { transform: translateZ(28px) translateX(-3px); } }
+.blob { width: 130px; height: 130px; display: grid; place-items: center; font: 400 64px/1 var(--f-hand); margin: 6px 0; color: var(--ink);
+  transform: translateZ(70px); border: 2px solid var(--ink); animation: blob 7s linear infinite; box-shadow: 0 8px 20px rgba(20,30,60,.15); }
+.blob span { display: block; }
+.b-red { background: var(--bad-soft); border-color: var(--bad); } .b-yellow { background: var(--warn-soft); border-color: var(--warn); }
+.b-blue { background: var(--accent-soft); border-color: var(--accent); } .b-violet { background: var(--violet-soft); border-color: var(--violet); }
+.b-green { background: var(--good-soft); border-color: var(--good); }
+@keyframes blob {
+  0%, 100% { border-radius: 63% 37% 54% 46% / 55% 48% 52% 45%; } 14% { border-radius: 40% 60% 54% 46% / 49% 60% 40% 51%; }
+  28% { border-radius: 54% 46% 38% 62% / 49% 70% 30% 51%; } 42% { border-radius: 61% 39% 55% 45% / 61% 38% 62% 39%; }
+  56% { border-radius: 61% 39% 67% 33% / 70% 50% 50% 30%; } 70% { border-radius: 50% 50% 34% 66% / 56% 68% 32% 44%; }
+  84% { border-radius: 46% 54% 50% 50% / 35% 61% 39% 65%; } }
+.clinic .face { padding: 18px 20px; gap: 9px; }
+.clinic .face .sc { font-size: 24px; line-height: 1.38; transform: translateZ(36px); }
+.clinic .face.front .sc { font-size: 29px; }
+.clinic .face.back .sc { font-size: 17px; color: var(--muted); }
+.clinic .face .why { font-size: 17px; color: var(--muted); line-height: 1.38; }
+.clinic .mini { width: 100%; }
+.takeaways { gap: 22px !important; } .takeaways li { font-size: 29px; }
+.row-card { padding: 16px 22px; } .row-card h3 { font-size: 26px; } .row-card p { font-size: 21px; }
+.toast { position: fixed; z-index: 40; left: 50%; bottom: calc(70px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--paper); padding: 10px 16px; border-radius: 10px; font: 500 15px/1.3 var(--f-body); }
+
+@media (prefers-reduced-motion: reduce) {
+  .frag, .bar > i, .progress, .flip-inner { transition: none; }
+  .slide.enter, .slide.enter *, .blob, .flip-hint, .claim, .claim .v, .stamp { animation: none !important; }
+}
 </style>
 <!--HEAD-->
 </head>
@@ -275,7 +348,7 @@ aside.notes { display: none; }
       <h1>RAG<br>Evaluation</h1>
       <p class="lede">Turning “it seems to work” into numbers you can defend, on the Egyptian Civil Code.</p>
       <div class="meta"><span><b>45 min</b> · Workshop 3 of 5</span><span>golden sets · retrieval metrics · RAGAS · MLflow · quality gates</span></div>
-      <p class="small">Press <code>→</code> to start · <code>N</code> notes · <code>O</code> overview · <code>?</code> all keys</p>
+      <p class="small">Press <code>→</code> to start · <code>N</code> notes · <code>P</code> presenter window · <code>?</code> all keys</p>
     </div>
     <div class="diagram" style="height:600px">{{svg:title-art}}</div>
   </div>
@@ -290,7 +363,7 @@ aside.notes { display: none; }
 
 <!-- ===================================================== 2 · DAY MAP -->
 <section class="slide" data-section="Opening" data-min="1" data-title="Where we are in the day">
-  <div class="kicker">Opening</div>
+  <div class="kicker">Opening · press → to build</div>
   <h2>Where we are in the day</h2>
   <div class="diagram grow">{{svg:day-map}}</div>
   <p class="lede">W1 and W2 built the system. This workshop builds the <mark>instrument</mark> that W4 and W5 depend on: every later decision is checked against these numbers.</p>
@@ -338,10 +411,9 @@ aside.notes { display: none; }
 
 <!-- ===================================================== 4 · EXAM DASHCAM BRAKES -->
 <section class="slide" data-section="Why evaluate" data-min="1.5" data-title="Evaluation, observability, guardrails">
-  <div class="kicker">Why evaluate</div>
+  <div class="kicker">Why evaluate · press → to add each job</div>
   <h2>Three jobs people mix up</h2>
   <div class="diagram grow">{{svg:exam-dashcam-brakes}}</div>
-  <p class="lede">Today is the exam. W5 adds the dashcam and the brakes. None of them replaces the others.</p>
   <aside class="notes">
     <ul>
       <li>Evaluation: fixed questions, before release, produces scores. It stops a bad <b>release</b>, not a bad answer.</li>
@@ -375,10 +447,9 @@ aside.notes { display: none; }
 
 <!-- ===================================================== 6 · WHERE RAG BREAKS -->
 <section class="slide" data-section="Why evaluate" data-min="2" data-title="Where a RAG system breaks">
-  <div class="kicker">Why evaluate</div>
+  <div class="kicker">Why evaluate · press → for each failure</div>
   <h2>Where a RAG system breaks</h2>
   <div class="diagram grow">{{svg:rag-failure-points}}</div>
-  <p class="lede">An end-to-end score tells you <i>that</i> it failed. Scoring each stage tells you <mark>where to fix it</mark>.</p>
   <aside class="notes">
     <ul>
       <li>Walk left to right. 1 is W1's job (parsing). 2–3 are retrieval. 4–5 are generation.</li>
@@ -390,10 +461,9 @@ aside.notes { display: none; }
 
 <!-- ===================================================== 7 · GOLDEN SET SOURCES -->
 <section class="slide" data-section="The golden set" data-min="2" data-title="Where a golden set comes from">
-  <div class="kicker">The golden set</div>
+  <div class="kicker">The golden set · press → to add each source</div>
   <h2>The golden set: the exam every version must sit</h2>
   <div class="diagram grow">{{svg:golden-set-sources}}</div>
-  <p class="lede">Same questions, every run. Change the questions and old scores stop meaning anything.</p>
   <aside class="notes">
     <ul>
       <li>We start from the reference repo's benchmark (<code>evaluation/data/civil_code_rag_qa_benchmark.json</code>).</li>
@@ -458,10 +528,9 @@ aside.notes { display: none; }
 
 <!-- ===================================================== 10 · TRIAD -->
 <section class="slide" data-section="What to measure" data-min="2" data-title="The RAG triad, plus recall">
-  <div class="kicker">What to measure</div>
+  <div class="kicker">What to measure · press → for each arrow</div>
   <h2>Four arrows, four questions</h2>
   <div class="diagram grow">{{svg:rag-triad}}</div>
-  <p class="lede"><span class="t-acc">Blue</span> judges the retriever. <span class="t-good">Green</span> judges the generator. The reference answer is the only part a human writes.</p>
   <aside class="notes">
     <ul>
       <li>These are the four RAGAS metrics. Each arrow compares two things.</li>
@@ -501,22 +570,46 @@ aside.notes { display: none; }
 </section>
 
 <!-- ===================================================== 12 · LLM JUDGE -->
-<section class="slide" data-section="Judging answers" data-min="2" data-title="LLM-as-judge">
-  <div class="kicker">Judging answers</div>
+<section class="slide" data-section="Judging answers" data-min="1" data-title="LLM-as-judge">
+  <div class="kicker">Judging answers · press → to build</div>
   <h2>The green side needs a judge: another LLM</h2>
-  <div class="diagram" style="height:340px">{{svg:llm-judge}}</div>
-  <h3>A judge is an instrument, and it has biases</h3>
-  <div class="row" style="gap:18px">
-    <div class="card sketch" style="flex:1"><span class="tag t-bad">self-preference</span><p>Rates answers from its own model family higher.</p></div>
-    <div class="card sketch" style="flex:1"><span class="tag t-bad">verbosity</span><p>Longer answers look better.</p></div>
-    <div class="card sketch" style="flex:1"><span class="tag t-bad">language</span><p>English-trained judges on Arabic legal text: <mark>unknown bias</mark>.</p></div>
-    <div class="card sketch" style="flex:1"><span class="tag t-bad">noise</span><p>Same input, slightly different score each run.</p></div>
-  </div>
-  <p class="small"><b>Mitigate:</b> temperature 0 · a different model family from the generator · structured output · log the judge as a parameter · hand-check 20 judgments against a lawyer.</p>
+  <div class="diagram grow">{{svg:llm-judge}}</div>
   <aside class="notes">
     <ul>
-      <li>RAGAS is a library of carefully-prompted judge pipelines with structured outputs.</li>
-      <li>Changing the judge model changes all your scores. That's why it's logged as an MLflow param.</li>
+      <li>Inputs: the question, what was retrieved, and the answer under test. No reference needed for faithfulness.</li>
+      <li>The judge follows a fixed rubric and returns structured JSON, so scores are parseable and repeatable-ish.</li>
+      <li>Here claim 2 ("must cancel if the loss is over a third") is not in Article 147, so the score is 0.5.</li>
+      <li>RAGAS is a library of carefully-prompted judge pipelines like this one.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ===================================================== 12b · JUDGE BIASES -->
+<section class="slide" data-section="Judging answers" data-min="1" data-title="A judge has biases">
+  <div class="kicker">Judging answers · press → or click a card to see the fix</div>
+  <h2>A judge is an instrument, and it has biases</h2>
+  <div class="cols-4 grow">
+    <div class="flip" tabindex="0" role="button" aria-label="Self-preference bias: flip for the fix"><div class="flip-inner">
+      <div class="face front sketch"><span class="tag t-bad">bias</span><div class="blob b-red"><span>≈</span></div><h3>Self-preference</h3><p>Rates answers from its own model family higher.</p><span class="flip-hint">flip for the fix ↻</span></div>
+      <div class="face back sketch"><span class="tag t-good">fix</span><h3>Different family</h3><p>Use a judge from a different model family than the generator.</p></div>
+    </div></div>
+    <div class="flip" tabindex="0" role="button" aria-label="Verbosity bias: flip for the fix"><div class="flip-inner">
+      <div class="face front sketch"><span class="tag t-bad">bias</span><div class="blob b-yellow"><span>¶</span></div><h3>Verbosity</h3><p>Longer answers look better to the judge.</p><span class="flip-hint">flip for the fix ↻</span></div>
+      <div class="face back sketch"><span class="tag t-good">fix</span><h3>Score claims</h3><p>Count supported claims, as faithfulness does, instead of asking “how good is this?”.</p></div>
+    </div></div>
+    <div class="flip" tabindex="0" role="button" aria-label="Language bias: flip for the fix"><div class="flip-inner">
+      <div class="face front sketch"><span class="tag t-bad">bias</span><div class="blob b-blue"><span class="ar" lang="ar">ع</span></div><h3>Language</h3><p>Trained mostly on English: <mark>unknown bias</mark> on Arabic legal text.</p><span class="flip-hint">flip for the fix ↻</span></div>
+      <div class="face back sketch"><span class="tag t-good">fix</span><h3>Check by hand</h3><p>Compare 20 Arabic judgments with a lawyer's before trusting the numbers.</p></div>
+    </div></div>
+    <div class="flip" tabindex="0" role="button" aria-label="Noise: flip for the fix"><div class="flip-inner">
+      <div class="face front sketch"><span class="tag t-bad">bias</span><div class="blob b-violet"><span>±</span></div><h3>Noise</h3><p>Same input, slightly different score on every run.</p><span class="flip-hint">flip for the fix ↻</span></div>
+      <div class="face back sketch"><span class="tag t-good">fix</span><h3>Measure it</h3><p>Temperature 0, structured output, and run one config 3× to see the spread.</p></div>
+    </div></div>
+  </div>
+  <div class="callout">Log the judge model as an MLflow parameter: <b>a new judge means new scores</b>.</div>
+  <aside class="notes">
+    <ul>
+      <li>Ask the room for the fix before flipping each card.</li>
       <li>Calibration and bias tests are take-home; just know they exist.</li>
     </ul>
   </aside>
@@ -544,7 +637,7 @@ aside.notes { display: none; }
       <div class="claim frag" data-step="claims"><span class="n">c3</span><span>The judge must cancel the contract if a party lost over a third of its value.</span><span class="v"></span></div>
       <span class="lbl frag" data-verify style="font:600 14px/1 var(--f-body); letter-spacing:.1em; text-transform:uppercase; color:var(--muted)">2 · each claim is checked against the context</span>
       <div class="frag" data-score style="display:flex; gap:22px; align-items:center; margin-top:8px">
-        <span class="score-big">2 / 3 = 0.67</span>
+        <span class="score-big">2 / 3 = <span data-count="0.67">0.67</span></span>
         <span class="small">supported claims ÷ all claims.<br>c3 was invented: the exact failure that matters most in law.</span>
       </div>
     </div>
@@ -560,27 +653,21 @@ aside.notes { display: none; }
 
 <!-- ===================================================== 14 · OTHER 3 METRICS -->
 <section class="slide" data-section="Judging answers" data-min="1.5" data-title="The other three RAGAS metrics">
-  <div class="kicker">Judging answers</div>
+  <div class="kicker">Judging answers · press → or click to flip each card</div>
   <h2>The other three, in one recipe each</h2>
   <div class="cols-3 grow">
-    <div class="card sketch">
-      <span class="tag t-good">generator</span>
-      <h3>Answer relevancy</h3>
-      <ol style="margin:0; padding-left:22px; display:grid; gap:6px"><li>Judge writes 3 questions the answer would answer</li><li>Embed them and the real question</li><li>Mean cosine similarity</li></ol>
-      <p class="small"><b>Drops when</b> the answer pastes the whole article, hedges, or answers a neighbouring question.</p>
-    </div>
-    <div class="card sketch">
-      <span class="tag t-acc">retriever</span>
-      <h3>Context precision</h3>
-      <ol style="margin:0; padding-left:22px; display:grid; gap:6px"><li>For each retrieved article: is it useful for the reference answer?</li><li>Average precision, weighted by rank</li></ol>
-      <p class="small"><b>Drops when</b> ten articles come back and one is useful, or the useful one sits at rank 9.</p>
-    </div>
-    <div class="card sketch">
-      <span class="tag t-acc">retriever</span>
-      <h3>Context recall</h3>
-      <ol style="margin:0; padding-left:22px; display:grid; gap:6px"><li>Split the <b>reference</b> answer into claims</li><li>Can each be attributed to the retrieved articles?</li><li>Fraction attributed</li></ol>
-      <p class="small"><b>Drops when</b> the answer needs three articles and we found one.</p>
-    </div>
+    <div class="flip" tabindex="0" role="button" aria-label="Answer relevancy: flip for the recipe"><div class="flip-inner">
+      <div class="face front sketch"><span class="tag t-good">judges the generator</span><div class="blob b-green"><span>?</span></div><h3>Answer relevancy</h3><p class="big-q">Does the answer address the question?</p><span class="flip-hint">flip for the recipe ↻</span></div>
+      <div class="face back sketch"><h3>Answer relevancy</h3><ol><li>Judge writes 3 questions the answer would answer</li><li>Embed them and the real question</li><li>Mean cosine similarity</li></ol><p class="small"><b>Drops when</b> it pastes the whole article, hedges, or answers a neighbouring question.</p></div>
+    </div></div>
+    <div class="flip" tabindex="0" role="button" aria-label="Context precision: flip for the recipe"><div class="flip-inner">
+      <div class="face front sketch"><span class="tag t-acc">judges the retriever</span><div class="blob b-blue"><span>⌖</span></div><h3>Context precision</h3><p class="big-q">Is what we retrieved actually useful?</p><span class="flip-hint">flip for the recipe ↻</span></div>
+      <div class="face back sketch"><h3>Context precision</h3><ol><li>For each retrieved article: is it useful for the reference answer?</li><li>Average precision, weighted by rank</li></ol><p class="small"><b>Drops when</b> ten articles come back and one is useful, or the useful one sits at rank 9.</p></div>
+    </div></div>
+    <div class="flip" tabindex="0" role="button" aria-label="Context recall: flip for the recipe"><div class="flip-inner">
+      <div class="face front sketch"><span class="tag t-acc">judges the retriever</span><div class="blob b-violet"><span>∑</span></div><h3>Context recall</h3><p class="big-q">Did we retrieve everything the answer needs?</p><span class="flip-hint">flip for the recipe ↻</span></div>
+      <div class="face back sketch"><h3>Context recall</h3><ol><li>Split the <b>reference</b> answer into claims</li><li>Can each be attributed to the retrieved articles?</li><li>Fraction attributed</li></ol><p class="small"><b>Drops when</b> the answer needs three articles and we found one.</p></div>
+    </div></div>
   </div>
   <div class="callout warn">Context precision and recall need a <b>reference answer</b>. Faithfulness and relevancy do not, which is why they can also run on live traffic in W5.</div>
   <aside class="notes">
@@ -593,7 +680,7 @@ aside.notes { display: none; }
 
 <!-- ===================================================== 15 · FAILURE CLINIC -->
 <section class="slide" data-section="Judging answers" data-min="2" data-title="Failure clinic">
-  <div class="kicker">Judging answers · which metric drops? click to reveal</div>
+  <div class="kicker">Judging answers · which metric drops? press → or click to flip</div>
   <h2>Failure clinic</h2>
   <div class="clinic grow" id="clinic"></div>
   <aside class="notes">
@@ -630,13 +717,12 @@ aside.notes { display: none; }
 
 <!-- ===================================================== 17 · BILINGUAL -->
 <section class="slide" data-section="Arabic" data-min="2" data-title="Bilingual ablation">
-  <div class="kicker">Arabic · the corpus's biggest asset</div>
+  <div class="kicker">Arabic · the corpus's biggest asset · press → to build</div>
   <h2>Same question, two languages, same article?</h2>
-  <div class="diagram" style="height:300px">{{svg:bilingual}}</div>
-  <div class="cols-3">
-    <div class="card sketch"><h3>Why it's free</h3><p>Every article exists in Arabic and English, so every question gets a twin. Link them with <code>pair_id</code>.</p></div>
-    <div class="card sketch"><h3>What we report</h3><p>top-1 agreement · Jaccard@5 · <b>hit@5 (AR − EN)</b>. A negative gap means the embedder reads Arabic worse.</p></div>
-    <div class="card sketch"><h3>Watch the judge too</h3><p>An English-centric judge scoring Arabic answers may be biased. Hand-check a sample of Arabic judgments.</p></div>
+  <div class="diagram grow">{{svg:bilingual}}</div>
+  <div class="cols-2">
+    <div class="card sketch row-card"><h3>Why it's free</h3><p>Every article exists in Arabic and English, so every question gets a twin, linked by <code>pair_id</code>.</p></div>
+    <div class="card sketch row-card"><h3>Watch the judge too</h3><p>An English-centric judge scoring Arabic answers may be biased. Hand-check a sample.</p></div>
   </div>
   <aside class="notes">
     <ul>
@@ -649,10 +735,9 @@ aside.notes { display: none; }
 
 <!-- ===================================================== 18 · PIPELINE -->
 <section class="slide" data-section="The code" data-min="1.5" data-title="How the eval module is wired">
-  <div class="kicker">The code · src/evaluation/</div>
+  <div class="kicker">The code · src/evaluation/ · press → to build</div>
   <h2>A module, not a notebook</h2>
   <div class="diagram grow">{{svg:eval-pipeline}}</div>
-  <p class="lede">A notebook can't be a CI gate. One command, one report, one exit code.</p>
   <aside class="notes">
     <ul>
       <li>The reference repo evaluates in notebooks (<code>experiments/evaluation_*.ipynb</code>). We move it into <code>src/evaluation/</code>.</li>
@@ -767,7 +852,7 @@ aside.notes { display: none; }
 
 <!-- ===================================================== 24 · FLYWHEEL -->
 <section class="slide" data-section="Wrap-up" data-min="1" data-title="Eval-driven development">
-  <div class="kicker">Wrap-up</div>
+  <div class="kicker">Wrap-up · press → to go round</div>
   <h2>Evaluation is a loop, not a step</h2>
   <div class="diagram grow">{{svg:flywheel}}</div>
   <aside class="notes">
@@ -780,15 +865,15 @@ aside.notes { display: none; }
 
 <!-- ===================================================== 25 · TAKEAWAYS -->
 <section class="slide" data-section="Wrap-up" data-min="1" data-title="Takeaways">
-  <div class="kicker">Wrap-up</div>
+  <div class="kicker">Wrap-up · press → for each</div>
   <h2>Five things to keep</h2>
   <div class="cols-2 grow">
-    <ul class="clean" style="align-content:start">
-      <li><b>Eyeballing is not evaluation.</b> A fixed golden set, scored the same way every time.</li>
-      <li><b>Split retrieval from generation.</b> Retrieval metrics are free: run them on every commit.</li>
-      <li><b>Code before judges.</b> Citations, repeal and refusals are deterministic checks.</li>
-      <li><b>Judges are instruments.</b> Log them, calibrate them, and distrust them on Arabic until checked.</li>
-      <li><b>Every change is a run; every PR passes the gate.</b></li>
+    <ul class="clean takeaways" style="align-content:start">
+      <li class="frag"><b>Eyeballing is not evaluation.</b> A fixed golden set, scored the same way every time.</li>
+      <li class="frag"><b>Split retrieval from generation.</b> Retrieval metrics are free: run them on every commit.</li>
+      <li class="frag"><b>Code before judges.</b> Citations, repeal and refusals are deterministic checks.</li>
+      <li class="frag"><b>Judges are instruments.</b> Log them, calibrate them, and distrust them on Arabic until checked.</li>
+      <li class="frag"><b>Every change is a run; every PR passes the gate.</b></li>
     </ul>
     <div class="card sketch">
       <h3>Done when</h3>
@@ -827,6 +912,7 @@ aside.notes { display: none; }
 </div>
 <div class="rotate-hint" id="rotate-hint" hidden>Turn your phone sideways · swipe to change slides</div>
 <div class="notes-drawer" id="notes" hidden></div>
+<div class="toast" id="toast" hidden></div>
 <div class="overview" id="overview" hidden><div class="overview-grid" id="overview-grid"></div></div>
 <div class="help" id="help" hidden>
   <h3 style="margin-bottom:10px">Keys</h3>
@@ -834,6 +920,7 @@ aside.notes { display: none; }
     <tr><td><kbd>→</kbd> <kbd>Space</kbd></td><td>next step / slide</td></tr>
     <tr><td><kbd>←</kbd></td><td>previous slide</td></tr>
     <tr><td><kbd>N</kbd></td><td>speaker notes</td></tr>
+    <tr><td><kbd>P</kbd></td><td>presenter window (notes + timer on your laptop)</td></tr>
     <tr><td><kbd>O</kbd></td><td>overview of all slides</td></tr>
     <tr><td><kbd>T</kbd> / <kbd>R</kbd></td><td>timer start-pause / reset</td></tr>
     <tr><td><kbd>D</kbd></td><td>light / dark</td></tr>
@@ -875,7 +962,105 @@ let cur = 0;
 const planned = []; let acc = 0;
 slides.forEach(s => { acc += parseFloat(s.dataset.min || "1"); planned.push(acc); });
 
-function show(i, fromHash = false) {
+const REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---- live drawing of the Excalidraw diagrams, one build step at a time ---- */
+function svgSteps(svg) { let m = 0; svg.querySelectorAll(".xs").forEach(g => { m = Math.max(m, +g.dataset.step); }); return m; }
+function resetDiagram(svg, upto) {
+  svg.querySelectorAll(".xs").forEach(g => {
+    g.getAnimations({ subtree: true }).forEach(a => a.cancel());
+    g.querySelectorAll("path").forEach(p => { p.style.strokeDasharray = ""; });
+    g.classList.toggle("pending", +g.dataset.step > upto);
+  });
+}
+function drawStep(svg, step) {
+  const groups = [...svg.querySelectorAll(`.xs[data-step="${step}"]`)];
+  groups.forEach(g => g.classList.remove("pending"));
+  if (REDUCE) return;
+  const inc = Math.min(80, 1600 / Math.max(1, groups.length));
+  groups.forEach((g, k) => {
+    const d = k * inc;
+    g.querySelectorAll("path").forEach(p => {
+      const fill = p.getAttribute("fill"), stroke = p.getAttribute("stroke");
+      if (stroke && stroke !== "none" && (!fill || fill === "none") && !p.getAttribute("stroke-dasharray")) {
+        let len = 0; try { len = p.getTotalLength(); } catch {}
+        if (!len) return;
+        p.style.strokeDasharray = `${len} ${len}`;
+        p.animate([{ strokeDashoffset: len }, { strokeDashoffset: 0 }],
+          { duration: Math.min(850, 220 + len * 0.45), delay: d, fill: "backwards", easing: "cubic-bezier(.5,0,.3,1)" });
+      } else {
+        p.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 380, delay: d + 160, fill: "backwards" });
+      }
+    });
+    g.querySelectorAll("text").forEach(tx => tx.animate([{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }],
+      { duration: 420, delay: d + 140, fill: "backwards", easing: "ease-out" }));
+  });
+}
+
+/* ---- every slide has a queue of steps: diagram builds, fragments, card flips (document order) ---- */
+function queueOf(slide) {
+  if (slide._q) return slide._q;
+  const q = [];
+  slide.querySelectorAll(".diagram svg, .frag, .flip").forEach(el => {
+    if (el.tagName.toLowerCase() === "svg") { for (let s = 1; s <= svgSteps(el); s++) q.push({ kind: "draw", el, s }); }
+    else q.push({ kind: el.classList.contains("frag") ? "frag" : "flip", el });
+  });
+  return (slide._q = q);
+}
+function prepRise(slide) {
+  if (slide._rise) return; slide._rise = true;
+  let i = 0;
+  const mark = el => { el.classList.add("rise"); el.style.setProperty("--i", i++); };
+  [...slide.children].forEach(ch => {
+    if (ch.matches(".kicker, h1, h2, aside, .frag, .diagram")) return;
+    if (ch.matches(".cols-2, .cols-3, .cols-4, .row, .clinic, .title-wrap, .fw, .rp, .ml, .ts")) [...ch.children].forEach(c => { if (!c.matches(".frag, .diagram")) mark(c); });
+    else if (ch.matches("table")) ch.querySelectorAll("tbody tr").forEach(mark);
+    else mark(ch);
+  });
+  $$(".stamp:not(.bad)", slide).forEach((s, k) => s.style.setProperty("--i", k));
+}
+function enterSlide(slide, back) {
+  prepRise(slide);
+  slide.classList.remove("enter", "back"); void slide.offsetWidth;
+  if (!REDUCE) slide.classList.add("enter"); if (back) slide.classList.add("back");
+  const q = queueOf(slide);
+  $$(".flip", slide).forEach(f => f.classList.remove("flipped"));
+  slide.querySelectorAll(".diagram svg").forEach(svg => {
+    if (back) resetDiagram(svg, 99); else { resetDiagram(svg, 0); drawStep(svg, 0); }
+  });
+  $$(".frag", slide).forEach(f => f.classList.toggle("shown", back));
+  slide._qi = back ? q.findIndex(s => s.kind === "flip") : 0;
+  if (slide._qi < 0) slide._qi = back ? q.length : 0;
+  growBars(slide);
+  slide.dispatchEvent(new CustomEvent("enter", { detail: { back } }));
+}
+function runStep(slide) {
+  const q = queueOf(slide);
+  while (slide._qi < q.length) {
+    const s = q[slide._qi++];
+    if (s.kind === "draw") { drawStep(s.el, s.s); return true; }
+    if (s.kind === "frag") { if (!s.el.classList.contains("shown")) { revealFrag(s.el); return true; } continue; }
+    if (s.kind === "flip") { if (!s.el.classList.contains("flipped")) { s.el.classList.add("flipped"); return true; } continue; }
+  }
+  return false;
+}
+function growBars(slide) {
+  if (REDUCE) return;
+  slide.querySelectorAll(".bar > i").forEach((b, k) => {
+    const w = b.style.width; b.style.transition = "none"; b.style.width = "0%"; void b.offsetWidth;
+    b.style.transition = ""; b.style.transitionDelay = `${0.5 + k * 0.04}s`;
+    requestAnimationFrame(() => { b.style.width = w; setTimeout(() => { b.style.transitionDelay = ""; }, 1500); });
+  });
+}
+function countUp(el) {
+  const to = parseFloat(el.dataset.count), dec = +(el.dataset.dec || 2), t0 = performance.now(), dur = REDUCE ? 1 : 900;
+  const tick = now => { const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3); el.textContent = (to * e).toFixed(dec); if (k < 1) requestAnimationFrame(tick); };
+  requestAnimationFrame(tick);
+}
+document.addEventListener("click", e => { const f = e.target.closest(".flip"); if (f) f.classList.toggle("flipped"); });
+document.addEventListener("keydown", e => { if ((e.key === "Enter") && e.target.matches(".flip")) e.target.classList.toggle("flipped"); });
+
+function show(i, fromHash = false, back = false) {
   cur = Math.max(0, Math.min(slides.length - 1, i));
   slides.forEach((s, k) => s.classList.toggle("active", k === cur));
   $("#progress").style.width = `${((cur + 1) / slides.length) * 100}%`;
@@ -887,16 +1072,19 @@ function show(i, fromHash = false) {
   }
   if (!fromHash) history.replaceState(null, "", `#s${cur + 1}`);
   renderNotes(); markOverview();
-  slides[cur].dispatchEvent(new CustomEvent("enter"));
+  enterSlide(slides[cur], back);
 }
 function next() {
-  const hidden = $$(".frag:not(.shown)", slides[cur]);
-  if (hidden.length) { revealFrag(hidden[0]); return; }
+  if (runStep(slides[cur])) return;
   if (cur === 0 && !timer.started) timer.toggle();
-  show(cur + 1);
+  if (cur < slides.length - 1) show(cur + 1);
 }
-function prev() { show(cur - 1); }
-function revealFrag(el) { el.classList.add("shown"); slides[cur].dispatchEvent(new CustomEvent("frag", { detail: el })); }
+function prev() { if (cur > 0) show(cur - 1, false, true); }
+function revealFrag(el) {
+  el.classList.add("shown");
+  el.querySelectorAll("[data-count]").forEach(countUp);
+  slides[cur].dispatchEvent(new CustomEvent("frag", { detail: el }));
+}
 
 document.addEventListener("keydown", e => {
   if (e.target.matches("input, select, textarea")) return;
@@ -913,6 +1101,7 @@ document.addEventListener("keydown", e => {
   else if (k === "d" || k === "D") cycleTheme();
   else if (k === "f" || k === "F") fullscreen();
   else if (k === "?") toggle("#help");
+  else if (k === "p" || k === "P") openPresenter();
   else if (k === "Escape") ["#notes", "#overview", "#help"].forEach(s => $(s).hidden = true);
 });
 $("#b-next").onclick = next; $("#b-prev").onclick = prev;
@@ -948,6 +1137,39 @@ const savedTheme = store.get("w3-theme"); if (savedTheme) document.documentEleme
 function renderNotes() {
   const n = slides[cur].querySelector("aside.notes");
   $("#notes").innerHTML = `<h4>Slide ${cur + 1} · ${esc(slides[cur].dataset.title || "")} · plan ${slides[cur].dataset.min} min, done by ${fmt(planned[cur] * 60)}</h4>${n ? n.innerHTML : "<p>No notes.</p>"}`;
+  syncPresenter();
+}
+/* ---- presenter window (P): notes, next slide and timer on your laptop, slides on the projector ---- */
+let pres = null;
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(t._h); t._h = setTimeout(() => { t.hidden = true; }, 3500); }
+function openPresenter() {
+  try { pres = window.open("", "w3-presenter", "width=980,height=720"); } catch { pres = null; }
+  if (!pres) { toast("This viewer blocks extra windows. Open the file in a browser for the presenter window, or press N."); return; }
+  pres.document.open();
+  pres.document.write(`<!doctype html><meta charset="utf-8"><title>Presenter · W3 RAG Evaluation</title>
+  <style>body{margin:0;padding:24px 30px;font:18px/1.5 system-ui,sans-serif;background:#14171d;color:#e6e9ef}
+  #top{display:flex;justify-content:space-between;align-items:baseline;gap:20px}#t{font:600 44px/1 ui-monospace,monospace}
+  #t.late{color:#ff8fab}h1{font-size:30px;margin:14px 0 4px}#plan{color:#9aa3b3}#n li{margin:8px 0}#nx{margin-top:22px;padding-top:14px;border-top:1px solid #2e3542;color:#9aa3b3}
+  button{font:inherit;padding:8px 16px;margin-right:8px;border-radius:8px;border:1px solid #444;background:#1c212b;color:inherit;cursor:pointer}</style>
+  <div id="top"><div id="t"></div><div><button id="pv">← back</button><button id="nx2">next →</button></div></div>
+  <h1 id="h"></h1><div id="plan"></div><div id="n"></div><div id="nx"></div>`);
+  pres.document.close();
+  pres.document.getElementById("pv").onclick = () => prev();
+  pres.document.getElementById("nx2").onclick = () => next();
+  pres.document.addEventListener("keydown", e => {
+    if (["ArrowRight", " ", "PageDown"].includes(e.key)) { e.preventDefault(); next(); }
+    if (["ArrowLeft", "PageUp"].includes(e.key)) { e.preventDefault(); prev(); }
+  });
+  syncPresenter();
+}
+function syncPresenter() {
+  if (!pres || pres.closed) return;
+  const d = pres.document, s = slides[cur], n = s.querySelector("aside.notes");
+  if (!d.getElementById("h")) return;
+  d.getElementById("h").textContent = `${cur + 1} / ${slides.length} · ${s.dataset.title || ""}`;
+  d.getElementById("plan").textContent = `plan ${s.dataset.min} min · finish this slide by ${fmt(planned[cur] * 60)}`;
+  d.getElementById("n").innerHTML = n ? n.innerHTML : "";
+  d.getElementById("nx").textContent = cur < slides.length - 1 ? `Next: ${slides[cur + 1].dataset.title}` : "Last slide";
 }
 const og = $("#overview-grid");
 slides.forEach((s, i) => {
@@ -972,6 +1194,9 @@ const timer = {
     el.classList.toggle("late", this.started && t > plannedEnd + 30);
     el.classList.toggle("early", this.started && t < plannedStart - 60);
     el.title = `Planned: this slide should end by ${fmt(plannedEnd)}. T start/pause, R reset.`;
+    if (pres && !pres.closed && pres.document.getElementById("t")) {
+      const pt = pres.document.getElementById("t"); pt.textContent = `${fmt(t)} / 45:00`; pt.className = el.classList.contains("late") ? "late" : "";
+    }
   },
 };
 $("#timer").onclick = () => timer.toggle();
@@ -1133,12 +1358,13 @@ const CASES = [
 ];
 const MINI_LABEL = { faithfulness: "faithfulness", answer_relevancy: "relevancy", context_precision: "ctx precision", context_recall: "ctx recall" };
 const clinic = $("#clinic");
-CASES.forEach(c => {
-  const b = document.createElement("button"); b.type = "button"; b.className = "case sketch";
+CASES.forEach((c, n) => {
+  const b = document.createElement("div"); b.className = "flip"; b.tabIndex = 0; b.setAttribute("role", "button");
+  b.setAttribute("aria-label", `Case ${n + 1}: flip to see which metric drops`);
   const rows = Object.entries(c.m).map(([k, v]) => `<div class="mini${k === c.drop ? " drop" : ""}"><span>${MINI_LABEL[k]}</span><span class="bar"><i style="width:${v * 100}%"></i></span><span>${v.toFixed(2)}</span></div>`).join("")
     + (c.extra ? `<div class="mini drop"><span>cite grounded</span><span class="bar"><i style="width:0%"></i></span><span>0.00</span></div>` : "");
-  b.innerHTML = `<div class="sc">${c.s}</div><div class="ask">Which metric drops? →</div><div class="reveal">${rows}<div class="why">${c.why}</div></div>`;
-  b.onclick = () => b.classList.toggle("open");
+  b.innerHTML = `<div class="flip-inner"><div class="face front sketch"><span class="tag t-acc">case ${n + 1}</span><div class="sc">${c.s}</div><span class="flip-hint">which metric drops? ↻</span></div>
+    <div class="face back sketch"><div class="sc">${c.s}</div>${rows}<div class="why">${c.why}</div></div></div>`;
   clinic.appendChild(b);
 });
 
@@ -1150,9 +1376,12 @@ fwSlide.addEventListener("frag", e => {
     cl.forEach((c, i) => setTimeout(() => { c.classList.add(v[i]); c.querySelector(".v").textContent = v[i] === "ok" ? "✓" : "✗"; }, 250 * (i + 1)));
   }
 });
-fwSlide.addEventListener("enter", () => {
-  $$(".claim", fwSlide).forEach(c => { c.classList.remove("ok", "no"); c.querySelector(".v").textContent = ""; });
-  $$(".frag", fwSlide).forEach(f => f.classList.remove("shown"));
+fwSlide.addEventListener("enter", e => {
+  const v = ["ok", "ok", "no"], back = e.detail && e.detail.back;
+  $$(".claim", fwSlide).forEach((c, i) => {
+    c.classList.remove("ok", "no"); c.querySelector(".v").textContent = "";
+    if (back) { c.classList.add(v[i]); c.querySelector(".v").textContent = v[i] === "ok" ? "✓" : "✗"; }
+  });
 });
 
 /* ================= MLflow comparison (illustrative) ================= */
@@ -1187,9 +1416,9 @@ mlRender();
 /* ================= threshold & noise simulator ================= */
 let tsSamples = [];
 function randn() { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
-function tsSimulate() { const m = +$("#ts-mean").value, sd = +$("#ts-sd").value; tsSamples = Array.from({ length: 40 }, () => Math.max(0, Math.min(1, m + sd * randn()))); drawThreshold(); }
+function tsSimulate() { const m = +$("#ts-mean").value, sd = +$("#ts-sd").value; tsSamples = Array.from({ length: 40 }, () => Math.max(0, Math.min(1, m + sd * randn()))); drawThreshold(true); }
 function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
-function drawThreshold() {
+function drawThreshold(drop = false) {
   const svg = $("#ts-svg"); if (!svg || !tsSamples.length) return;
   const m = +$("#ts-mean").value, sd = +$("#ts-sd").value;
   $("#ts-mv").textContent = m.toFixed(2); $("#ts-sv").textContent = sd.toFixed(3).replace(/0$/, "");
@@ -1205,6 +1434,9 @@ function drawThreshold() {
   tsSamples.forEach(v => { const b = Math.round(v * 200) / 200; bins[b] = (bins[b] || 0) + 1; const yy = 388 - (bins[b] - 1) * 17;
     g += `<circle cx="${x(b)}" cy="${yy}" r="7.5" fill="${v < 0.75 ? bad : good}" stroke="${cssVar("--paper")}" stroke-width="1.5"/>`; });
   svg.innerHTML = g;
+  if (drop && !REDUCE) svg.querySelectorAll("circle").forEach((c, k) => c.animate(
+    [{ transform: "translateY(-340px)", opacity: 0 }, { transform: "none", opacity: 1 }],
+    { duration: 650, delay: k * 22, fill: "backwards", easing: "cubic-bezier(.3,1.35,.55,1)" }));
   const fails = tsSamples.filter(v => v < 0.75).length;
   const pct = Math.round(fails / tsSamples.length * 100);
   $("#ts-out").innerHTML = m >= 0.75
@@ -1212,7 +1444,19 @@ function drawThreshold() {
     : `<span style="color:${good}">${100 - pct}% of runs pass</span><br><span class="small">a PR that is actually below the floor</span>`;
 }
 $("#ts-mean").oninput = tsSimulate; $("#ts-sd").oninput = tsSimulate; $("#ts-again").onclick = tsSimulate;
+$$(".slide").find(s => s.dataset.title === "Thresholds and noise").addEventListener("enter", e => { if (!(e.detail && e.detail.back)) setTimeout(tsSimulate, 500); });
 tsSimulate();
+
+/* ================= terminal: lines type in ================= */
+$$(".term").forEach(term => { term.innerHTML = term.innerHTML.split("\n").map(l => `<span class="tl">${l}</span>`).join("\n"); });
+const runSlide = $$(".slide").find(s => s.dataset.title === "Run it");
+runSlide.addEventListener("enter", e => {
+  if (REDUCE || (e.detail && e.detail.back)) return;
+  let k = 0;
+  $$(".term", runSlide).forEach((term, ti) => term.querySelectorAll(".tl").forEach(l => {
+    l.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 120, delay: 450 + (k++) * (ti ? 70 : 35), fill: "backwards" });
+  }));
+});
 
 /* ================= boot ================= */
 const fromHash = () => { const m = /^#s(\d+)$/.exec(location.hash); return m ? +m[1] - 1 : 0; };
