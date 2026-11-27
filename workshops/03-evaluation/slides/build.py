@@ -27,7 +27,7 @@ def svg(name: str) -> str:
     s = s.replace("Excalifont", f"Excalifont-{name}").replace("Cascadia", f"Cascadia-{name}")
     s = re.sub(r'(<svg[^>]*?)\s(width|height)="[^"]*"', r"\1", s, count=1)
     s = re.sub(r'(<svg[^>]*?)\s(width|height)="[^"]*"', r"\1", s, count=1)
-    return s.replace("<svg ", f'<svg role="img" aria-label="{name.replace("-", " ")} diagram" ', 1)
+    return s.replace("<svg ", f'<svg data-name="{name}" role="img" aria-label="{name.replace("-", " ")} diagram" ', 1)
 
 
 def check_notes(label: str, code: str, notes: list[dict]) -> list[str]:
@@ -93,7 +93,9 @@ def main() -> int:
               .replace("{{CODE_DATA}}", as_json_script(files))
               .replace("{{RECORD_DATA}}", as_json_script(record))
               .replace("{{RUN_COMMANDS}}", terminal((HERE / "run_commands.txt").read_text(encoding="utf-8")))
-              .replace("{{RUN_OUTPUT}}", terminal((HERE / "run_output.txt").read_text(encoding="utf-8"))))
+              .replace("{{RUN_OUTPUT}}", terminal((HERE / "run_output.txt").read_text(encoding="utf-8")))
+              .replace("{{ROUGH_JS}}", (HERE / "assets/rough-4.6.6.min.js").read_text(encoding="utf-8").replace("</script", "<\\/script"))
+              .replace("{{EXPLAINERS_JS}}", (HERE / "explainers.js").read_text(encoding="utf-8").replace("</script", "<\\/script")))
     out = re.sub(r"\{\{svg:([\w-]+)\}\}", lambda m: svg(m.group(1)), out)
     left = re.findall(r"\{\{[^}]+\}\}", out)
     if left:

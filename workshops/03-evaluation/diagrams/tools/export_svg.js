@@ -38,6 +38,10 @@ const server = http.createServer((req, res) => {
         while (a.firstChild) g.appendChild(a.firstChild);
         a.replaceWith(g);
       });
+      // where diagram coordinate (0,0) lands in the SVG, so the deck can overlay animations in diagram units
+      const [minX, minY] = window.getCommonBounds(scene.elements);
+      el.setAttribute('data-ox', (16 - minX).toFixed(2));
+      el.setAttribute('data-oy', (16 - minY).toFixed(2));
       return el.outerHTML;
     }, scene);
     const name = f.replace('.excalidraw', '.svg');

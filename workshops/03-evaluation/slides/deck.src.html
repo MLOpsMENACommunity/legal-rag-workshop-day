@@ -259,32 +259,13 @@ aside.notes { display: none; }
   #timer, #b-notes, #b-theme { display: none; }
 }
 
-/* ---------- animation: slide entrance ---------- */
-.slide.enter { animation: slideIn .4s ease-out both; }
-.slide.enter.back { animation-name: slideInBack; }
-@keyframes slideIn { from { opacity: 0; transform: translateX(28px); } }
-@keyframes slideInBack { from { opacity: 0; transform: translateX(-28px); } }
-.slide.enter .kicker { animation: kickerIn .5s .05s ease-out both; }
-@keyframes kickerIn { from { opacity: 0; transform: translateX(-36px); } }
-.slide.enter h1, .slide.enter h2 { animation: writeOn 1s .12s cubic-bezier(.55,.05,.3,1) both; }
-@keyframes writeOn { from { clip-path: inset(-15% 100% -25% 0); } to { clip-path: inset(-15% 0 -25% 0); } }
-.slide.enter .rise { animation: rise .6s cubic-bezier(.2,.8,.3,1) both; animation-delay: calc(.4s + var(--i, 0) * .09s); }
-@keyframes rise { from { opacity: 0; transform: translateY(22px) rotate(-.5deg); } }
-.slide.enter mark { animation: markSweep .8s 1.1s ease-out both; }
-.frag.shown mark { animation: markSweep .8s .3s ease-out both; }
-@keyframes markSweep { from { background-size: 0% 100%; } to { background-size: 100% 100%; } }
-.slide.enter .stamp:not(.bad) { animation: slam .5s both; animation-delay: calc(1s + var(--i, 0) * .09s); }
-.verdict.shown .stamp.bad { animation: slam .5s .05s both; }
-@keyframes slam { 0% { opacity: 0; transform: scale(2.4) rotate(-16deg); } 60% { opacity: 1; transform: scale(.9) rotate(-2deg); } 100% { transform: rotate(-4deg); } }
-.claim.frag:not(.shown) { transform: translateX(-60px); }
-.claim .v { transition: transform .35s cubic-bezier(.3,1.6,.5,1); }
-.claim.ok .v, .claim.no .v { animation: pop .45s cubic-bezier(.3,1.6,.5,1) both; }
-@keyframes pop { from { transform: scale(0) rotate(-30deg); } }
-.claim.no { animation: shake .5s .1s both; }
-@keyframes shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+/* ---------- explainer animations ---------- */
+.anim { position: relative; min-height: 0; }
+.anim > svg { position: absolute; inset: 0; width: 100%; height: 100%; filter: var(--diagram-filter); }
+.anim .replay { position: absolute; right: 0; top: -6px; z-index: 2; border: 1.5px solid var(--line); background: var(--paper); color: var(--muted);
+  border-radius: 999px; padding: 5px 12px; font: 600 13px/1 var(--f-body); cursor: pointer; }
+.anim .replay:hover { color: var(--accent); border-color: var(--accent); }
 .xs.pending { opacity: 0; }
-.term .tl { display: inline; }
-.bar > i { transition: width .9s cubic-bezier(.2,.8,.3,1); }
 
 /* ---------- 3D flip cards (after the friend's pricing card) ---------- */
 .cols-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; }
@@ -305,19 +286,13 @@ aside.notes { display: none; }
 .big-q { font-size: 30px !important; line-height: 1.35; }
 .flip-hint { margin-top: auto; font: 600 15px/1 var(--f-body); color: var(--accent); letter-spacing: .04em; }
 .flip-hint::after { content: ""; }
-.flip .face.front .flip-hint { animation: nudge 2.4s 2s ease-in-out infinite; }
-@keyframes nudge { 0%, 70%, 100% { transform: translateZ(28px); } 80% { transform: translateZ(28px) translateX(6px); } 90% { transform: translateZ(28px) translateX(-3px); } }
 .blob { width: 130px; height: 130px; display: grid; place-items: center; font: 400 64px/1 var(--f-hand); margin: 6px 0; color: var(--ink);
-  transform: translateZ(70px); border: 2px solid var(--ink); animation: blob 7s linear infinite; box-shadow: 0 8px 20px rgba(20,30,60,.15); }
+  transform: translateZ(70px); border: 2px solid var(--ink); border-radius: 63% 37% 54% 46% / 55% 48% 52% 45%; box-shadow: 0 8px 20px rgba(20,30,60,.15); }
 .blob span { display: block; }
 .b-red { background: var(--bad-soft); border-color: var(--bad); } .b-yellow { background: var(--warn-soft); border-color: var(--warn); }
 .b-blue { background: var(--accent-soft); border-color: var(--accent); } .b-violet { background: var(--violet-soft); border-color: var(--violet); }
 .b-green { background: var(--good-soft); border-color: var(--good); }
-@keyframes blob {
-  0%, 100% { border-radius: 63% 37% 54% 46% / 55% 48% 52% 45%; } 14% { border-radius: 40% 60% 54% 46% / 49% 60% 40% 51%; }
-  28% { border-radius: 54% 46% 38% 62% / 49% 70% 30% 51%; } 42% { border-radius: 61% 39% 55% 45% / 61% 38% 62% 39%; }
-  56% { border-radius: 61% 39% 67% 33% / 70% 50% 50% 30%; } 70% { border-radius: 50% 50% 34% 66% / 56% 68% 32% 44%; }
-  84% { border-radius: 46% 54% 50% 50% / 35% 61% 39% 65%; } }
+
 .clinic .face { padding: 18px 20px; gap: 9px; }
 .clinic .face .sc { font-size: 24px; line-height: 1.38; transform: translateZ(36px); }
 .clinic .face.front .sc { font-size: 29px; }
@@ -330,7 +305,6 @@ aside.notes { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
   .frag, .bar > i, .progress, .flip-inner { transition: none; }
-  .slide.enter, .slide.enter *, .blob, .flip-hint, .claim, .claim .v, .stamp { animation: none !important; }
 }
 </style>
 <!--HEAD-->
@@ -377,7 +351,7 @@ aside.notes { display: none; }
 </section>
 
 <!-- ===================================================== 3 · EYEBALL TEST -->
-<section class="slide" data-section="Opening" data-min="1.5" data-title="The eyeball test">
+<section class="slide" data-section="Opening" data-min="1" data-title="The eyeball test">
   <div class="kicker">Opening</div>
   <h2>Three answers from this morning. Do they look right?</h2>
   <div class="cols-3 grow">
@@ -409,6 +383,21 @@ aside.notes { display: none; }
   </aside>
 </section>
 
+<!-- ===================================================== 3b · SAMPLING -->
+<section class="slide" data-section="Opening" data-min="1" data-title="Reading answers is not evaluation">
+  <div class="kicker">Opening · press → to step through</div>
+  <h2>Why reading a few answers misses failures</h2>
+  <div class="anim grow" data-anim="sampling"></div>
+  <aside class="notes">
+    <ul>
+      <li>→ 1: you read 3 answers by eye. All look fine.</li>
+      <li>→ 2: the eval scores all 20 the same way and finds 4 failures, including the three from the previous slide.</li>
+      <li>→ 3: the maths. With 4 bad answers in 20, three random reads miss every one of them about half the time: C(16,3) ÷ C(20,3) = 560 ÷ 1140 ≈ 49%.</li>
+      <li>Line to land: "a demo is a sample of three."</li>
+    </ul>
+  </aside>
+</section>
+
 <!-- ===================================================== 4 · EXAM DASHCAM BRAKES -->
 <section class="slide" data-section="Why evaluate" data-min="1.5" data-title="Evaluation, observability, guardrails">
   <div class="kicker">Why evaluate · press → to add each job</div>
@@ -425,7 +414,7 @@ aside.notes { display: none; }
 </section>
 
 <!-- ===================================================== 5 · NO UNIVERSAL METRIC -->
-<section class="slide" data-section="Why evaluate" data-min="1" data-title="There is no universal LLM metric">
+<section class="slide" data-section="Why evaluate" data-min="0.5" data-title="There is no universal LLM metric">
   <div class="kicker">Why evaluate</div>
   <h2>There is no universal LLM metric</h2>
   <table class="tbl">
@@ -452,6 +441,7 @@ aside.notes { display: none; }
   <div class="diagram grow">{{svg:rag-failure-points}}</div>
   <aside class="notes">
     <ul>
+      <li>On entry a green dot is one question taking the happy path. Each → sends a question that breaks at the next stage (red ring).</li>
       <li>Walk left to right. 1 is W1's job (parsing). 2–3 are retrieval. 4–5 are generation.</li>
       <li>Retrieval failures can be measured with plain code because we know the gold article numbers. Generation failures need a judge.</li>
       <li>The question to always ask about a wrong answer: <b>did it retrieve the right article?</b> If no, fix retrieval. If yes, fix the prompt/model.</li>
@@ -491,7 +481,7 @@ aside.notes { display: none; }
 </section>
 
 <!-- ===================================================== 9 · COVERAGE + PITFALLS -->
-<section class="slide" data-section="The golden set" data-min="1.5" data-title="Coverage and pitfalls">
+<section class="slide" data-section="The golden set" data-min="1" data-title="Coverage and pitfalls">
   <div class="kicker">The golden set</div>
   <h2>Cover the behaviours, not just the topics</h2>
   <div class="cols-2 grow">
@@ -617,63 +607,59 @@ aside.notes { display: none; }
 
 <!-- ===================================================== 13 · FAITHFULNESS WALK -->
 <section class="slide" data-section="Judging answers" data-min="2" data-title="How faithfulness is computed">
-  <div class="kicker">Judging answers · press → to step</div>
+  <div class="kicker">Judging answers · press → to step through</div>
   <h2>Faithfulness, step by step</h2>
-  <div class="fw grow">
-    <div style="display:grid; gap:16px; align-content:start">
-      <div class="box sketch">
-        <span class="lbl">Retrieved context · Article 147</span>
-        <p style="font-size:22px">The contract makes the law of the parties. It may only be revoked or amended by mutual agreement or for reasons provided by law. (2) If exceptional, unforeseeable public events make performance excessively onerous, the judge may reduce the obligation to a reasonable limit.</p>
-      </div>
-      <div class="box sketch">
-        <span class="lbl">Answer under test</span>
-        <p style="font-size:22px">Under Article 147 a contract binds both parties and can only be changed by mutual agreement. A judge may reduce an onerous obligation after exceptional events, and <b>must cancel the contract if one party lost more than a third of its value</b>.</p>
-      </div>
-    </div>
-    <div style="display:grid; gap:12px; align-content:start">
-      <span class="lbl frag" style="font:600 14px/1 var(--f-body); letter-spacing:.1em; text-transform:uppercase; color:var(--muted)">1 · the judge splits the answer into claims</span>
-      <div class="claim frag" data-step="claims"><span class="n">c1</span><span>A contract binds both parties and changes need mutual agreement.</span><span class="v"></span></div>
-      <div class="claim frag" data-step="claims"><span class="n">c2</span><span>A judge may reduce an onerous obligation after exceptional events.</span><span class="v"></span></div>
-      <div class="claim frag" data-step="claims"><span class="n">c3</span><span>The judge must cancel the contract if a party lost over a third of its value.</span><span class="v"></span></div>
-      <span class="lbl frag" data-verify style="font:600 14px/1 var(--f-body); letter-spacing:.1em; text-transform:uppercase; color:var(--muted)">2 · each claim is checked against the context</span>
-      <div class="frag" data-score style="display:flex; gap:22px; align-items:center; margin-top:8px">
-        <span class="score-big">2 / 3 = <span data-count="0.67">0.67</span></span>
-        <span class="small">supported claims ÷ all claims.<br>c3 was invented: the exact failure that matters most in law.</span>
-      </div>
-    </div>
-  </div>
+  <div class="anim grow" data-anim="faithfulness"></div>
   <aside class="notes">
     <ul>
-      <li>Step 1: decomposition into atomic claims (an LLM call). Step 2: NLI-style verification of each claim against the retrieved text (more LLM calls). Score = ratio.</li>
-      <li>c3 sounds like real law (it resembles a lesion rule) but is not in Article 147. That's why fluent hallucinations are dangerous.</li>
-      <li>Cost: at least 2 judge calls per question just for this metric.</li>
+      <li>→ 1: the judge LLM splits the answer into atomic claims (one LLM call).</li>
+      <li>→ 2: each claim is checked against the retrieved text (more LLM calls). c1 and c2 are backed by Article 147; c3 is not in any sentence.</li>
+      <li>→ 3: score = supported ÷ all = 2/3. c3 sounds like real law, which is exactly why fluent hallucinations are dangerous.</li>
+      <li>Note: faithfulness never looks at the reference answer, only at what was retrieved.</li>
     </ul>
   </aside>
 </section>
 
-<!-- ===================================================== 14 · OTHER 3 METRICS -->
-<section class="slide" data-section="Judging answers" data-min="1.5" data-title="The other three RAGAS metrics">
-  <div class="kicker">Judging answers · press → or click to flip each card</div>
-  <h2>The other three, in one recipe each</h2>
-  <div class="cols-3 grow">
-    <div class="flip" tabindex="0" role="button" aria-label="Answer relevancy: flip for the recipe"><div class="flip-inner">
-      <div class="face front sketch"><span class="tag t-good">judges the generator</span><div class="blob b-green"><span>?</span></div><h3>Answer relevancy</h3><p class="big-q">Does the answer address the question?</p><span class="flip-hint">flip for the recipe ↻</span></div>
-      <div class="face back sketch"><h3>Answer relevancy</h3><ol><li>Judge writes 3 questions the answer would answer</li><li>Embed them and the real question</li><li>Mean cosine similarity</li></ol><p class="small"><b>Drops when</b> it pastes the whole article, hedges, or answers a neighbouring question.</p></div>
-    </div></div>
-    <div class="flip" tabindex="0" role="button" aria-label="Context precision: flip for the recipe"><div class="flip-inner">
-      <div class="face front sketch"><span class="tag t-acc">judges the retriever</span><div class="blob b-blue"><span>⌖</span></div><h3>Context precision</h3><p class="big-q">Is what we retrieved actually useful?</p><span class="flip-hint">flip for the recipe ↻</span></div>
-      <div class="face back sketch"><h3>Context precision</h3><ol><li>For each retrieved article: is it useful for the reference answer?</li><li>Average precision, weighted by rank</li></ol><p class="small"><b>Drops when</b> ten articles come back and one is useful, or the useful one sits at rank 9.</p></div>
-    </div></div>
-    <div class="flip" tabindex="0" role="button" aria-label="Context recall: flip for the recipe"><div class="flip-inner">
-      <div class="face front sketch"><span class="tag t-acc">judges the retriever</span><div class="blob b-violet"><span>∑</span></div><h3>Context recall</h3><p class="big-q">Did we retrieve everything the answer needs?</p><span class="flip-hint">flip for the recipe ↻</span></div>
-      <div class="face back sketch"><h3>Context recall</h3><ol><li>Split the <b>reference</b> answer into claims</li><li>Can each be attributed to the retrieved articles?</li><li>Fraction attributed</li></ol><p class="small"><b>Drops when</b> the answer needs three articles and we found one.</p></div>
-    </div></div>
-  </div>
-  <div class="callout warn">Context precision and recall need a <b>reference answer</b>. Faithfulness and relevancy do not, which is why they can also run on live traffic in W5.</div>
+<!-- ===================================================== 14 · ANSWER RELEVANCY -->
+<section class="slide" data-section="Judging answers" data-min="1" data-title="How answer relevancy is computed">
+  <div class="kicker">Judging answers · press → to step through</div>
+  <h2>Answer relevancy: does it answer the question?</h2>
+  <div class="anim grow" data-anim="relevancy"></div>
   <aside class="notes">
     <ul>
-      <li>Answer relevancy needs an embedding model: use a multilingual one (we use BAAI/bge-m3) or Arabic answers score low for the wrong reason.</li>
-      <li>Retrieval-side RAGAS metrics are LLM versions of what we computed for free on slide 11. With gold IDs, prefer the free ones; RAGAS versions help when gold IDs are missing.</li>
+      <li>The judge reads only the answer and writes 3 questions that answer would answer. Each is embedded; the score is the mean cosine with the real question.</li>
+      <li>Good answer: the generated questions point the same way as the real one, ≈ 0.97.</li>
+      <li>Pasted article: everything in it is true, but the questions it answers are different ones, ≈ 0.35.</li>
+      <li>Use a multilingual embedding model (we use BAAI/bge-m3), or Arabic answers score low for the wrong reason.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ===================================================== 14b · CONTEXT PRECISION -->
+<section class="slide" data-section="Judging answers" data-min="1" data-title="How context precision is computed">
+  <div class="kicker">Judging answers · press → to step through</div>
+  <h2>Context precision: is the useful stuff on top?</h2>
+  <div class="anim grow" data-anim="precision"></div>
+  <aside class="notes">
+    <ul>
+      <li>→ 1: the judge marks each retrieved article useful or not, against the reference answer.</li>
+      <li>→ 2: precision is computed at every useful rank, then averaged: (1/3 + 2/5) ÷ 2 = 0.37.</li>
+      <li>→ 3: a reranker moves the same two articles to the top: 1.00. Same retrieval, better order. This is what W2's reranker is for.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ===================================================== 14c · CONTEXT RECALL -->
+<section class="slide" data-section="Judging answers" data-min="1" data-title="How context recall is computed">
+  <div class="kicker">Judging answers · press → to step through</div>
+  <h2>Context recall: did we retrieve everything needed?</h2>
+  <div class="anim grow" data-anim="recall"></div>
+  <p class="small">Precision and recall need a <b>reference answer</b>. Faithfulness and relevancy do not, so those two can also run on live traffic in W5.</p>
+  <aside class="notes">
+    <ul>
+      <li>Recall starts from the reference, not the answer: split it into claims and look for each in what was retrieved.</li>
+      <li>Only "good faith" (Art. 148) is found: 1/3. Retrieving Art. 147 as well makes it 3/3.</li>
+      <li>This is the metric that catches "faithful and still wrong".</li>
     </ul>
   </aside>
 </section>
@@ -717,16 +703,14 @@ aside.notes { display: none; }
 
 <!-- ===================================================== 17 · BILINGUAL -->
 <section class="slide" data-section="Arabic" data-min="2" data-title="Bilingual ablation">
-  <div class="kicker">Arabic · the corpus's biggest asset · press → to build</div>
+  <div class="kicker">Arabic · the corpus's biggest asset · press → to step through</div>
   <h2>Same question, two languages, same article?</h2>
-  <div class="diagram grow">{{svg:bilingual}}</div>
-  <div class="cols-2">
-    <div class="card sketch row-card"><h3>Why it's free</h3><p>Every article exists in Arabic and English, so every question gets a twin, linked by <code>pair_id</code>.</p></div>
-    <div class="card sketch row-card"><h3>Watch the judge too</h3><p>An English-centric judge scoring Arabic answers may be biased. Hand-check a sample.</p></div>
-  </div>
+  <div class="anim grow" data-anim="bilingual"></div>
   <aside class="notes">
     <ul>
       <li>This test answers a question almost nobody measures: does your embedding model understand Arabic, or just match characters?</li>
+      <li>Why it is free: every article exists in Arabic and English, so every golden question gets a twin, linked by <code>pair_id</code>.</li>
+      <li>Watch the judge too: an English-centric judge scoring Arabic answers may be biased. Hand-check a sample.</li>
       <li>Normalisation from W2 (<code>normalize_arabic_for_sparse</code>) shows up here: turn it off and watch the gap grow.</li>
       <li>Code: <code>bilingual.py</code>, 30 lines.</li>
     </ul>
@@ -740,6 +724,7 @@ aside.notes { display: none; }
   <div class="diagram grow">{{svg:eval-pipeline}}</div>
   <aside class="notes">
     <ul>
+      <li>Each → builds the next row, and dots show records moving: asked, scored for free, scored by the judge, logged, and finally the gate exits 1 on the planted phantom citation.</li>
       <li>The reference repo evaluates in notebooks (<code>experiments/evaluation_*.ipynb</code>). We move it into <code>src/evaluation/</code>.</li>
       <li>Free scorers first, paid scorer last and optional (<code>--skip-ragas</code>).</li>
       <li>The evaluator only talks to the system over <code>/ask</code>. It never imports retrieval code.</li>
@@ -748,7 +733,7 @@ aside.notes { display: none; }
 </section>
 
 <!-- ===================================================== 19 · CODE EXPLORER -->
-<section class="slide" data-section="The code" data-min="3.5" data-title="Code walkthrough">
+<section class="slide" data-section="The code" data-min="3" data-title="Code walkthrough">
   <div class="kicker">The code · click a file, then any highlighted line</div>
   <div class="grow" style="min-height:0">
     <div class="cx" data-explorer="code"></div>
@@ -780,7 +765,7 @@ aside.notes { display: none; }
 </section>
 
 <!-- ===================================================== 21 · MLFLOW -->
-<section class="slide" data-section="Experiments" data-min="1.5" data-title="Every eval is an MLflow run">
+<section class="slide" data-section="Experiments" data-min="1" data-title="Every eval is an MLflow run">
   <div class="kicker">Experiments</div>
   <h2>Every evaluation is an MLflow run</h2>
   <div class="cols-2 grow">
@@ -929,6 +914,8 @@ aside.notes { display: none; }
   </table>
 </div>
 
+<script>{{ROUGH_JS}}</script>
+<script>{{EXPLAINERS_JS}}</script>
 <script type="application/json" id="code-data">{{CODE_DATA}}</script>
 <script type="application/json" id="record-data">{{RECORD_DATA}}</script>
 <script>
@@ -977,6 +964,7 @@ function drawStep(svg, step) {
   const groups = [...svg.querySelectorAll(`.xs[data-step="${step}"]`)];
   groups.forEach(g => g.classList.remove("pending"));
   if (REDUCE) return;
+  const flow = flowOf(svg); if (flow) flow.go(step);     // data moving through the drawing, after it is drawn
   const inc = Math.min(80, 1600 / Math.max(1, groups.length));
   groups.forEach((g, k) => {
     const d = k * inc;
@@ -1001,8 +989,9 @@ function drawStep(svg, step) {
 function queueOf(slide) {
   if (slide._q) return slide._q;
   const q = [];
-  slide.querySelectorAll(".diagram svg, .frag, .flip").forEach(el => {
+  slide.querySelectorAll(".diagram svg, .anim, .frag, .flip").forEach(el => {
     if (el.tagName.toLowerCase() === "svg") { for (let s = 1; s <= svgSteps(el); s++) q.push({ kind: "draw", el, s }); }
+    else if (el.classList.contains("anim")) { const p = players.get(el); for (let i = 1; i < p.steps; i++) q.push({ kind: "anim", p, i }); }
     else q.push({ kind: el.classList.contains("frag") ? "frag" : "flip", el });
   });
   return (slide._q = q);
@@ -1020,18 +1009,16 @@ function prepRise(slide) {
   $$(".stamp:not(.bad)", slide).forEach((s, k) => s.style.setProperty("--i", k));
 }
 function enterSlide(slide, back) {
-  prepRise(slide);
-  slide.classList.remove("enter", "back"); void slide.offsetWidth;
-  if (!REDUCE) slide.classList.add("enter"); if (back) slide.classList.add("back");
   const q = queueOf(slide);
   $$(".flip", slide).forEach(f => f.classList.remove("flipped"));
   slide.querySelectorAll(".diagram svg").forEach(svg => {
+    const flow = flowOf(svg); if (flow) flow.reset();
     if (back) resetDiagram(svg, 99); else { resetDiagram(svg, 0); drawStep(svg, 0); }
   });
+  $$(".anim", slide).forEach(host => { const p = players.get(host); p.reset(); if (back) p.finish(); else p.go(0); });
   $$(".frag", slide).forEach(f => f.classList.toggle("shown", back));
   slide._qi = back ? q.findIndex(s => s.kind === "flip") : 0;
   if (slide._qi < 0) slide._qi = back ? q.length : 0;
-  growBars(slide);
   slide.dispatchEvent(new CustomEvent("enter", { detail: { back } }));
 }
 function runStep(slide) {
@@ -1039,10 +1026,29 @@ function runStep(slide) {
   while (slide._qi < q.length) {
     const s = q[slide._qi++];
     if (s.kind === "draw") { drawStep(s.el, s.s); return true; }
+    if (s.kind === "anim") { s.p.go(s.i); return true; }
     if (s.kind === "frag") { if (!s.el.classList.contains("shown")) { revealFrag(s.el); return true; } continue; }
     if (s.kind === "flip") { if (!s.el.classList.contains("flipped")) { s.el.classList.add("flipped"); return true; } continue; }
   }
   return false;
+}
+/* ---- explainer scenes (explainers.js) and flows over the diagrams ---- */
+const { Player, SCENES, FLOWS } = window.W3Anim;
+const players = new Map(), flows = new Map();
+$$(".anim[data-anim]").forEach(host => {
+  const p = new Player(host, SCENES[host.dataset.anim]); players.set(host, p);
+  const b = document.createElement("button"); b.type = "button"; b.className = "replay"; b.textContent = "↺ replay";
+  b.title = "Play this animation again from the start";
+  b.onclick = e => { e.stopPropagation(); const slide = host.closest(".slide"), q = queueOf(slide); p.reset(); p.go(0);
+    const k = q.findIndex(s => s.kind === "anim" && s.p === p); slide._qi = k < 0 ? q.length : k; };
+  host.appendChild(b);
+  host.addEventListener("click", () => { const slide = host.closest(".slide"), q = queueOf(slide), s = q[slide._qi];
+    if (slide.classList.contains("active") && s && s.kind === "anim" && s.p === p) runStep(slide); });
+});
+function flowOf(svg) {
+  const name = svg.dataset.name; if (!name || !FLOWS[name]) return null;
+  if (!flows.has(svg)) flows.set(svg, new Player(null, FLOWS[name], { svg, ox: +svg.dataset.ox || 0, oy: +svg.dataset.oy || 0 }));
+  return flows.get(svg);
 }
 function growBars(slide) {
   if (REDUCE) return;
@@ -1082,7 +1088,6 @@ function next() {
 function prev() { if (cur > 0) show(cur - 1, false, true); }
 function revealFrag(el) {
   el.classList.add("shown");
-  el.querySelectorAll("[data-count]").forEach(countUp);
   slides[cur].dispatchEvent(new CustomEvent("frag", { detail: el }));
 }
 
@@ -1368,22 +1373,6 @@ CASES.forEach((c, n) => {
   clinic.appendChild(b);
 });
 
-/* ================= faithfulness walk ================= */
-const fwSlide = $$(".slide").find(s => s.dataset.title === "How faithfulness is computed");
-fwSlide.addEventListener("frag", e => {
-  if (e.detail.hasAttribute("data-verify")) {
-    const cl = $$(".claim", fwSlide); const v = ["ok", "ok", "no"];
-    cl.forEach((c, i) => setTimeout(() => { c.classList.add(v[i]); c.querySelector(".v").textContent = v[i] === "ok" ? "✓" : "✗"; }, 250 * (i + 1)));
-  }
-});
-fwSlide.addEventListener("enter", e => {
-  const v = ["ok", "ok", "no"], back = e.detail && e.detail.back;
-  $$(".claim", fwSlide).forEach((c, i) => {
-    c.classList.remove("ok", "no"); c.querySelector(".v").textContent = "";
-    if (back) { c.classList.add(v[i]); c.querySelector(".v").textContent = v[i] === "ok" ? "✓" : "✗"; }
-  });
-});
-
 /* ================= MLflow comparison (illustrative) ================= */
 const RUNS = [
   { name: "baseline", base: true, "hit@5": .90, mrr: .81, faithfulness: .86, context_recall: .82, citation_correct: .89, p95_s: 2.9, usd_1k: 1.9 },
@@ -1446,17 +1435,6 @@ function drawThreshold(drop = false) {
 $("#ts-mean").oninput = tsSimulate; $("#ts-sd").oninput = tsSimulate; $("#ts-again").onclick = tsSimulate;
 $$(".slide").find(s => s.dataset.title === "Thresholds and noise").addEventListener("enter", e => { if (!(e.detail && e.detail.back)) setTimeout(tsSimulate, 500); });
 tsSimulate();
-
-/* ================= terminal: lines type in ================= */
-$$(".term").forEach(term => { term.innerHTML = term.innerHTML.split("\n").map(l => `<span class="tl">${l}</span>`).join("\n"); });
-const runSlide = $$(".slide").find(s => s.dataset.title === "Run it");
-runSlide.addEventListener("enter", e => {
-  if (REDUCE || (e.detail && e.detail.back)) return;
-  let k = 0;
-  $$(".term", runSlide).forEach((term, ti) => term.querySelectorAll(".tl").forEach(l => {
-    l.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 120, delay: 450 + (k++) * (ti ? 70 : 35), fill: "backwards" });
-  }));
-});
 
 /* ================= boot ================= */
 const fromHash = () => { const m = /^#s(\d+)$/.exec(location.hash); return m ? +m[1] - 1 : 0; };

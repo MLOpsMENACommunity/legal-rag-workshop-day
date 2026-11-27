@@ -8,3 +8,5 @@ self-contained file that works offline (fonts fall back to system fonts without 
 Rebuild after changing code, diagrams or notes: `cd slides && python build.py`.
 
 Earlier outline deck: https://claude.ai/artifact/PYnKQ9vs7zX3EQQZEkNzZj
+
+The animations are drawn with [rough.js](https://roughjs.com) 4.6.6 (MIT licence, © Preet Shihn), inlined from `slides/assets/`.

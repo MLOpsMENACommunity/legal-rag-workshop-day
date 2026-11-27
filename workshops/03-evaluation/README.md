@@ -85,24 +85,35 @@ The payoff: **participants see that the W1 and W2 decisions were right — by th
 
 Deck keys: `→` next step, `N` speaker notes (with per-slide timing), `P` presenter window (notes, timer and next slide on your laptop while the projector shows slides), `O` overview, `T` timer, `D` dark mode, `F` fullscreen. On phones: swipe.
 
-What moves: diagrams draw themselves stroke by stroke and build up one part per `→`; titles write on; cards flip in 3D (bias fixes, metric recipes, the failure clinic); the faithfulness claims get checked one by one; the terminal output types in; CI runs fall onto the threshold chart. `←` always shows the finished slide, so you can jump back without replaying. Animations switch off for viewers who ask their system for reduced motion.
+What moves, and why: each metric is shown as it is actually computed, one phase per `→`, in the same hand-drawn style (rough.js, `slides/explainers.js`):
+- reading 3 of 20 answers by eye vs. scoring all 20, and the ≈ 49 % chance the 3 miss every failure
+- faithfulness: the answer splits into claims, each claim is matched to sentences of Article 147, the invented one fails
+- answer relevancy: generated questions become vectors next to the real question; the angle is the score
+- context precision: a cursor computes precision at each useful rank; a reranker reorders the list and the score jumps
+- context recall: reference claims search the retrieved articles; retrieving Art. 147 fixes it
+- Arabic vs English: the two versions of one question land next to different articles in embedding space
+- data moving through the Excalidraw drawings: a question breaking at each failure point, inputs reaching the judge, records flowing through the eval module to the CI gate
+
+`←` always shows the finished state; `↺ replay` restarts an animation. Motion is off for viewers who ask their system for reduced motion.
 On the code slides, click a file, then any highlighted line to see what it does.
 
 ## Timeline (45 min)
 
 | Min | Slides | Activity |
 |-----|--------|----------|
-| 3 | 1–3 | Where we are in the day · the eyeball test: three W2 answers that look right and are wrong |
-| 4.5 | 4–6 | Evaluation vs observability vs guardrails · no universal metric · where RAG breaks |
-| 5.5 | 7–9 | The golden set: sources, one record field by field, coverage and pitfalls |
-| 4.5 | 10–11 | The four questions (RAGAS triad + recall) · **live retrieval-metrics playground** |
-| 9 | 12–17 | LLM-as-judge · its biases (flip cards) · faithfulness step by step · the other three metrics · failure clinic · legal checks in plain code |
-| 2 | 18 | Bilingual ablation |
+| 3.5 | 1–4 | Where we are in the day · the eyeball test · why reading a few answers misses failures (animated) |
+| 3.5 | 5–7 | Evaluation vs observability vs guardrails · no universal metric · where RAG breaks |
+| 5 | 8–10 | The golden set: sources, one record field by field, coverage and pitfalls |
+| 4.5 | 11–12 | The four questions (RAGAS triad + recall) · **live retrieval-metrics playground** |
+| 10 | 13–20 | LLM-as-judge · its biases · faithfulness, relevancy, precision and recall, each animated as computed · failure clinic · legal checks in plain code |
+| 2 | 21 | Bilingual ablation in embedding space |
 | **checkpoint** | | Everyone has seen the four RAGAS numbers and the free metrics |
-| 6 | 19–21 | Module structure · clickable code walkthrough · run it (real output from the mock API) |
-| 3.5 | 22–23 | MLflow: what to log · comparing runs |
-| 2.5 | 24 | Thresholds: why 0.75 in CI and 0.80 for alerts (noise simulator) |
-| 2 | 25–26 | Eval-driven development loop · takeaways and acceptance check |
+| 5.5 | 22–24 | Module structure (records flowing to the gate) · clickable code walkthrough · run it |
+| 3 | 25–26 | MLflow: what to log · comparing runs |
+| 2.5 | 27 | Thresholds: why 0.75 in CI and 0.80 for alerts (noise simulator) |
+| 2 | 28–29 | Eval-driven development loop · takeaways and acceptance check |
+
+About 42 planned minutes, leaving 3 for questions.
 
 With 45 minutes the hands-on is a demo: run `python -m evaluation run --skip-ragas` against the mock API on screen.
 If the slot stays at 60 minutes, give the extra 15 to the room running it themselves against their own W2 API.
