@@ -95,7 +95,9 @@ def main() -> int:
               .replace("{{RUN_COMMANDS}}", terminal((HERE / "run_commands.txt").read_text(encoding="utf-8")))
               .replace("{{RUN_OUTPUT}}", terminal((HERE / "run_output.txt").read_text(encoding="utf-8")))
               .replace("{{ROUGH_JS}}", (HERE / "assets/rough-4.6.6.min.js").read_text(encoding="utf-8").replace("</script", "<\\/script"))
-              .replace("{{EXPLAINERS_JS}}", (HERE / "explainers.js").read_text(encoding="utf-8").replace("</script", "<\\/script")))
+              .replace("{{EXPLAINERS_JS}}", (HERE / "explainers.js").read_text(encoding="utf-8").replace("</script", "<\\/script"))
+              .replace("{{PROCESSES_JS}}", (HERE / "processes.js").read_text(encoding="utf-8").replace("</script", "<\\/script"))
+              .replace("{{SPRITES_JSON}}", (HERE / "assets/sprites.json").read_text(encoding="utf-8").replace("</", "<\\/")))
     out = re.sub(r"\{\{svg:([\w-]+)\}\}", lambda m: svg(m.group(1)), out)
     left = re.findall(r"\{\{[^}]+\}\}", out)
     if left:

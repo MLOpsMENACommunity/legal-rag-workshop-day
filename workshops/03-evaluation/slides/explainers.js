@@ -39,7 +39,7 @@ class Kit {
     return g;
   }
   text(x, y, str, o = {}, parent) {
-    const size = o.size ?? 22, lh = o.lh ?? 1.3, lines = String(str).split("\n");
+    const size = Math.max(16, (o.size ?? 22) * (o.raw ? 1 : 1.1)), lh = o.lh ?? 1.3, lines = String(str).split("\n");
     const t = el("text", { x, y, "font-size": size, fill: o.color ?? P.ink, "text-anchor": o.anchor ?? "middle", "dominant-baseline": "middle", "font-family": o.mono ? MONO : HAND }, parent || this.layer);
     if (o.weight) t.setAttribute("font-weight", o.weight);
     const y0 = y - (lines.length - 1) * size * lh / 2;
@@ -488,61 +488,5 @@ SCENES.bilingual.land = async (k, st, from, to, art, color) => {
 const FLOWS = {};
 const send = async (k, pts, color, dur = 900, r = 10) => { const t = k.token(color, r); k.pos(t, pts[0][0], pts[0][1]); await k.along(t, pts, dur); return t; };
 
-FLOWS["rag-failure-points"] = { phases: [
-  async k => { // happy path: one question flows all the way through
-    await k.wait(1400);
-    const t = await send(k, [[420, 100], [420, 150], [420, 210], [710, 210], [1000, 210], [1290, 210]], P.fGreen, 2200, 12);
-    await k.burst(1290, 210, P.green); await k.fade(t, 0, 300); t.remove();
-  },
-  ...[0, 1, 2, 3, 4].map(i => async k => {
-    await k.wait(900);
-    const xs = [130, 420, 710, 1000, 1290];
-    const path = i === 0 ? [[130, 210], [275, 210]] : [[420, 100], [420, 150], [420, 210], ...xs.slice(2, i + 1).map(x => [x, 210])];
-    const t = await send(k, path, P.fYellow, 700 + i * 350, 12);
-    t.firstChild.setAttribute("fill", P.fRed); await k.burst(t._x, t._y); await k.wait(400); await k.fade(t, 0, 400); t.remove();
-  }),
-  async () => {},
-]};
-
-FLOWS["llm-judge"] = { phases: [
-  async () => {},
-  async k => { await k.wait(1200); await Promise.all([85, 265, 455].map((y, i) => k.wait(i * 200).then(() => send(k, [[400, y], [470, 270]], [P.fBlue, P.fYellow, P.fGreen][i], 700, 11)).then(t => k.fade(t, 0, 250)))); },
-  async k => {
-    await k.wait(1000);
-    const a = await send(k, [[600, 260], [1000, 260]], P.fGreen, 700, 12); const b = await send(k, [[600, 260], [1000, 260]], P.fRed, 700, 12);
-    await Promise.all([k.fade(a, 0, 300), k.fade(b, 0, 300)]);
-  },
-]};
-
-FLOWS["eval-pipeline"] = { phases: [
-  async k => { // 5 records leave the golden set; each asks the API and comes back
-    await k.wait(1500);
-    for (let i = 0; i < 3; i++) {
-      const t = await send(k, [[150, 95], [255, 95]], P.fYellow, 450, 10);
-      await k.along(t, [[520, 78], [690, 78]], 450); await k.along(t, [[690, 115], [520, 115]], 450); t.remove();
-    }
-  },
-  async k => { await k.wait(1200); await Promise.all([240, 720].map((x, i) => k.wait(i * 250).then(() => send(k, [[385, 150], [x, 245]], P.fGreen, 700)).then(t => k.fade(t, 0, 300)))); },
-  async k => { await k.wait(1100); const t = await send(k, [[385, 150], [1200, 245]], P.fViolet, 1000); await k.fade(t, 0, 300); },
-  async k => {
-    await k.wait(1200);
-    const ts = await Promise.all([240, 720, 1200].map(x => send(k, [[x, 415], [720 + (x - 720) * .25, 495]], P.fGray, 650)));
-    ts.forEach(t => t.remove());
-    const t = await send(k, [[535, 555], [445, 555]], P.fBlue, 450); await k.fade(t, 0, 300);
-  },
-  async k => {
-    await k.wait(1200);
-    const t = await send(k, [[905, 555], [1140, 555]], P.fGray, 650);
-    t.firstChild.setAttribute("fill", P.fRed); await k.burst(1140, 555);
-    await k.draw(k.text(1430, 482, "exit 1: citation_grounded 0.78 < 0.95", { size: 20, color: P.red, anchor: "end" }), 350);
-  },
-]};
-
-FLOWS["golden-set-sources"] = { phases: [
-  async () => {}, async () => {}, async () => {}, async () => {},
-  async k => { await k.wait(1100); await Promise.all([70, 220, 370, 520].map((y, i) => k.wait(i * 150).then(() => send(k, [[590, y], [745, 300]], P.fYellow, 650)).then(t => k.fade(t, 0, 250)))); },
-  async () => {},
-]};
-
-window.W3Anim = { Player, SCENES, FLOWS };
+window.W3Anim = { Player, SCENES, FLOWS, Kit, P, el, NS };
 })();

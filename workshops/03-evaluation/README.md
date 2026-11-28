@@ -85,14 +85,19 @@ The payoff: **participants see that the W1 and W2 decisions were right — by th
 
 Deck keys: `→` next step, `N` speaker notes (with per-slide timing), `P` presenter window (notes, timer and next slide on your laptop while the projector shows slides), `O` overview, `T` timer, `D` dark mode, `F` fullscreen. On phones: swipe.
 
-What moves, and why: each metric is shown as it is actually computed, one phase per `→`, in the same hand-drawn style (rough.js, `slides/explainers.js`):
-- reading 3 of 20 answers by eye vs. scoring all 20, and the ≈ 49 % chance the 3 miss every failure
-- faithfulness: the answer splits into claims, each claim is matched to sentences of Article 147, the invented one fails
-- answer relevancy: generated questions become vectors next to the real question; the angle is the score
-- context precision: a cursor computes precision at each useful rank; a reranker reorders the list and the score jumps
-- context recall: reference claims search the retrieved articles; retrieving Art. 147 fixes it
-- Arabic vs English: the two versions of one question land next to different articles in embedding space
-- data moving through the Excalidraw drawings: a question breaking at each failure point, inputs reaching the judge, records flowing through the eval module to the CI gate
+What moves, and why: every visual acts out the process it explains, one phase per `→`. The actors are the Excalidraw library icons (robots, stick figures, magnifier, database…), exported as sprites by `diagrams/tools/export_sprites.js`, so the style matches the libraries:
+- **the day:** the PDF becomes `articles.json`, W2 answers from it, W3 scores the answer, W4 ships it, W5 gates it; the scores flow back to W4 and W5
+- **evaluation vs observability vs guardrails:** a golden question goes through the system, the answer is compared with the reference and judged onto a scoreboard ×20; live users and traces until an alert rings; an answer carrying a national ID gets redacted at the guardrail
+- **where RAG breaks:** one question through the pipeline, with a zoom on each failure (parser merging two articles, query landing near the wrong article, top_k cutting the 9th result, an invented clause being written, a citation with no match)
+- **golden set:** questions flowing in from four sources, LLM drafts passing a human checker, versioning and what an edit does to comparability
+- **the four RAGAS arrows:** the pipeline produces question, articles and answer; a judge then compares each pair
+- **LLM-as-judge:** inputs fill a prompt template, it is sent, JSON comes back, code turns it into a number
+- **judge biases:** four small experiments (verbosity, self-preference, language, noise)
+- **faithfulness, relevancy, precision, recall, bilingual:** each metric computed step by step
+- **legal checks:** regex finds citations, digits are normalised, citations are matched against the retrieved and gold sets, the repeal check fails
+- **the eval module:** a records table filling row by row, scorers filling their columns, averages to MLflow, the gate blocking the PR
+- **MLflow:** config knobs set, eval runs, a run card lands in the experiment table, ×3
+- **the loop:** one change goes round; a production failure becomes golden question 21
 
 `←` always shows the finished state; `↺ replay` restarts an animation. Motion is off for viewers who ask their system for reduced motion.
 On the code slides, click a file, then any highlighted line to see what it does.

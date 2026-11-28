@@ -1,5 +1,10 @@
 # Workshop 3 — diagrams
 
+> **How the deck uses this folder now:** the slides act out processes with animated scenes
+> (`slides/processes.js`, `slides/explainers.js`). Their actors are icons from `libraries/`, exported as
+> sprites with `node tools/export_sprites.js` → `slides/assets/sprites.json`. The static diagrams below
+> are kept as editable references and as a non-animated fallback; only `title-art` is still on a slide.
+
 Hand-drawn diagrams for the deck, built as real `.excalidraw` files from community icon libraries.
 
 | Folder | What |

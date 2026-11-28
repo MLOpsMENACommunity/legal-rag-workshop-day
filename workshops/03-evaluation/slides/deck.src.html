@@ -337,15 +337,16 @@ aside.notes { display: none; }
 
 <!-- ===================================================== 2 · DAY MAP -->
 <section class="slide" data-section="Opening" data-min="1" data-title="Where we are in the day">
-  <div class="kicker">Opening · press → to build</div>
+  <div class="kicker">Opening · press → to step through</div>
   <h2>Where we are in the day</h2>
-  <div class="diagram grow">{{svg:day-map}}</div>
-  <p class="lede">W1 and W2 built the system. This workshop builds the <mark>instrument</mark> that W4 and W5 depend on: every later decision is checked against these numbers.</p>
+  <div class="anim grow" data-anim="day"></div>
   <aside class="notes">
     <ul>
-      <li>W4 will make things faster: every optimisation must be re-scored, because a faster system that hallucinates more is not better.</li>
-      <li>W5's CI gate is literally this eval, run on every PR.</li>
-      <li>So what we build in the next 45 minutes gets reused twice more today.</li>
+      <li>Follow the data. → 1: W1 turns the PDF into one record per article (<code>articles.json</code>).</li>
+      <li>→ 2: W2 indexes them and answers a question with a citation.</li>
+      <li>→ 3: W3, today: that answer gets measured, and so does every other one.</li>
+      <li>→ 4: W4 packs it into a container and makes it fast; W5 watches it and gates merges.</li>
+      <li>→ 5: both reuse today's eval: every speed-up is re-scored, every PR runs it.</li>
     </ul>
   </aside>
 </section>
@@ -399,16 +400,18 @@ aside.notes { display: none; }
 </section>
 
 <!-- ===================================================== 4 · EXAM DASHCAM BRAKES -->
-<section class="slide" data-section="Why evaluate" data-min="1.5" data-title="Evaluation, observability, guardrails">
-  <div class="kicker">Why evaluate · press → to add each job</div>
+<section class="slide" data-section="Why evaluate" data-min="2" data-title="Evaluation, observability, guardrails">
+  <div class="kicker">Why evaluate · press → to step through</div>
   <h2>Three jobs people mix up</h2>
-  <div class="diagram grow">{{svg:exam-dashcam-brakes}}</div>
+  <div class="anim grow" data-anim="jobs"></div>
   <aside class="notes">
     <ul>
-      <li>Evaluation: fixed questions, before release, produces scores. It stops a bad <b>release</b>, not a bad answer.</li>
-      <li>Observability: real traffic, after release. Tells you afterwards.</li>
-      <li>Guardrails: inline, every request. The only one that blocks one bad answer.</li>
-      <li>Common mistake: "we have Langfuse, so we evaluate." No: traces without a fixed exam cannot tell you if v2 is better than v1.</li>
+      <li>Exam. → 1: you take one golden question and ask the system: it retrieves articles, the LLM writes, the answer comes out.</li>
+      <li>→ 2: compare it with the reference answer; the judge scores it onto the scoreboard.</li>
+      <li>→ 3: repeat for all 20, get averages, decide: below the floor means fix before release. It stops a bad release, not a bad answer.</li>
+      <li>→ 4: dashcam. Real users, traces of each step, a dashboard; the alert rings after the damage is done.</li>
+      <li>→ 5: brakes. One answer carrying a national ID hits the guardrail and is redacted before it leaves. It stops this one answer.</li>
+      <li>→ 6: three jobs, three moments. None replaces the others.</li>
     </ul>
   </aside>
 </section>
@@ -436,30 +439,35 @@ aside.notes { display: none; }
 
 <!-- ===================================================== 6 · WHERE RAG BREAKS -->
 <section class="slide" data-section="Why evaluate" data-min="2" data-title="Where a RAG system breaks">
-  <div class="kicker">Why evaluate · press → for each failure</div>
+  <div class="kicker">Why evaluate · press → to step through</div>
   <h2>Where a RAG system breaks</h2>
-  <div class="diagram grow">{{svg:rag-failure-points}}</div>
+  <div class="anim grow" data-anim="failures"></div>
   <aside class="notes">
     <ul>
-      <li>On entry a green dot is one question taking the happy path. Each → sends a question that breaks at the next stage (red ring).</li>
-      <li>Walk left to right. 1 is W1's job (parsing). 2–3 are retrieval. 4–5 are generation.</li>
-      <li>Retrieval failures can be measured with plain code because we know the gold article numbers. Generation failures need a judge.</li>
-      <li>The question to always ask about a wrong answer: <b>did it retrieve the right article?</b> If no, fix retrieval. If yes, fix the prompt/model.</li>
+      <li>On entry: one question takes the happy path.</li>
+      <li>→ 1 parsing: the parser glues Art. 147 and 148 into one record, so retrieval can never return 147 alone (W1's job).</li>
+      <li>→ 2 retrieval: the question is embedded next to the wrong article.</li>
+      <li>→ 3 ranking: the right article is 9th; top_k = 5 cuts it before the LLM sees it.</li>
+      <li>→ 4 generation: the LLM adds a clause that is in no article.</li>
+      <li>→ 5 citation: it cites an article it never retrieved.</li>
+      <li>→ 6: retrieval failures are measured with code (we know the right article numbers); generation failures need a judge.</li>
     </ul>
   </aside>
 </section>
 
 <!-- ===================================================== 7 · GOLDEN SET SOURCES -->
 <section class="slide" data-section="The golden set" data-min="2" data-title="Where a golden set comes from">
-  <div class="kicker">The golden set · press → to add each source</div>
+  <div class="kicker">The golden set · press → to step through</div>
   <h2>The golden set: the exam every version must sit</h2>
-  <div class="diagram grow">{{svg:golden-set-sources}}</div>
+  <div class="anim grow" data-anim="golden"></div>
   <aside class="notes">
     <ul>
-      <li>We start from the reference repo's benchmark (<code>evaluation/data/civil_code_rag_qa_benchmark.json</code>).</li>
-      <li>Synthetic generation is fine as a draft. Unreviewed synthetic questions test whether one LLM agrees with another.</li>
-      <li>Best long-term source: real questions that failed in production (W5 closes this loop).</li>
-      <li>Room activity, if time allows: each participant writes 2 questions of their own into the set.</li>
+      <li>→ 1: 10 questions from the reference benchmark. → 2: lawyers write and approve 4.</li>
+      <li>→ 3: an LLM drafts 6; a human rejects 2. Unchecked synthetic questions only test whether one LLM agrees with another.</li>
+      <li>→ 4: 2 real questions that failed in production (W5 closes this loop). 20 total.</li>
+      <li>→ 5: version it (DVC); two runs on the same version are comparable.</li>
+      <li>→ 6: edit one question and the hash changes: run C cannot be compared with A or B.</li>
+      <li>Room activity if time allows: each participant writes 2 questions of their own.</li>
     </ul>
   </aside>
 </section>
@@ -518,14 +526,15 @@ aside.notes { display: none; }
 
 <!-- ===================================================== 10 · TRIAD -->
 <section class="slide" data-section="What to measure" data-min="2" data-title="The RAG triad, plus recall">
-  <div class="kicker">What to measure · press → for each arrow</div>
+  <div class="kicker">What to measure · press → to step through</div>
   <h2>Four arrows, four questions</h2>
-  <div class="diagram grow">{{svg:rag-triad}}</div>
+  <div class="anim grow" data-anim="triad"></div>
   <aside class="notes">
     <ul>
-      <li>These are the four RAGAS metrics. Each arrow compares two things.</li>
-      <li>Faithfulness never looks at the reference: it only asks "is the answer supported by what was retrieved?" So a faithful answer can still be incomplete (slide 3, example 3).</li>
-      <li>Next: the blue side, done without any LLM.</li>
+      <li>On entry the pipeline produces the three things we can judge: question, retrieved articles, answer.</li>
+      <li>Each → a judge compares one pair: precision (question vs articles), faithfulness (articles vs answer), relevancy (answer vs question).</li>
+      <li>→ 4: recall needs a fourth thing, the reference answer a lawyer wrote once; it compares reference vs articles.</li>
+      <li>→ 5: faithfulness 1.0 and recall 0.0 at the same time: faithful and still wrong.</li>
     </ul>
   </aside>
 </section>
@@ -561,46 +570,32 @@ aside.notes { display: none; }
 
 <!-- ===================================================== 12 · LLM JUDGE -->
 <section class="slide" data-section="Judging answers" data-min="1" data-title="LLM-as-judge">
-  <div class="kicker">Judging answers · press → to build</div>
+  <div class="kicker">Judging answers · press → to step through</div>
   <h2>The green side needs a judge: another LLM</h2>
-  <div class="diagram grow">{{svg:llm-judge}}</div>
+  <div class="anim grow" data-anim="judge"></div>
   <aside class="notes">
     <ul>
-      <li>Inputs: the question, what was retrieved, and the answer under test. No reference needed for faithfulness.</li>
-      <li>The judge follows a fixed rubric and returns structured JSON, so scores are parseable and repeatable-ish.</li>
-      <li>Here claim 2 ("must cancel if the loss is over a third") is not in Article 147, so the score is 0.5.</li>
-      <li>RAGAS is a library of carefully-prompted judge pipelines like this one.</li>
+      <li>A judge is just a prompt template plus a model plus a parser.</li>
+      <li>→ 1: the three inputs fill the template's slots. → 2: the filled prompt goes to the judge model.</li>
+      <li>→ 3: it answers in JSON: claims, a 1/0 verdict per claim, a reason.</li>
+      <li>→ 4: code turns the verdicts into a number (1 ÷ 2 = 0.5) and logs it per question.</li>
+      <li>RAGAS is a library of carefully written versions of exactly this.</li>
     </ul>
   </aside>
 </section>
 
 <!-- ===================================================== 12b · JUDGE BIASES -->
 <section class="slide" data-section="Judging answers" data-min="1" data-title="A judge has biases">
-  <div class="kicker">Judging answers · press → or click a card to see the fix</div>
+  <div class="kicker">Judging answers · press → to step through</div>
   <h2>A judge is an instrument, and it has biases</h2>
-  <div class="cols-4 grow">
-    <div class="flip" tabindex="0" role="button" aria-label="Self-preference bias: flip for the fix"><div class="flip-inner">
-      <div class="face front sketch"><span class="tag t-bad">bias</span><div class="blob b-red"><span>≈</span></div><h3>Self-preference</h3><p>Rates answers from its own model family higher.</p><span class="flip-hint">flip for the fix ↻</span></div>
-      <div class="face back sketch"><span class="tag t-good">fix</span><h3>Different family</h3><p>Use a judge from a different model family than the generator.</p></div>
-    </div></div>
-    <div class="flip" tabindex="0" role="button" aria-label="Verbosity bias: flip for the fix"><div class="flip-inner">
-      <div class="face front sketch"><span class="tag t-bad">bias</span><div class="blob b-yellow"><span>¶</span></div><h3>Verbosity</h3><p>Longer answers look better to the judge.</p><span class="flip-hint">flip for the fix ↻</span></div>
-      <div class="face back sketch"><span class="tag t-good">fix</span><h3>Score claims</h3><p>Count supported claims, as faithfulness does, instead of asking “how good is this?”.</p></div>
-    </div></div>
-    <div class="flip" tabindex="0" role="button" aria-label="Language bias: flip for the fix"><div class="flip-inner">
-      <div class="face front sketch"><span class="tag t-bad">bias</span><div class="blob b-blue"><span class="ar" lang="ar">ع</span></div><h3>Language</h3><p>Trained mostly on English: <mark>unknown bias</mark> on Arabic legal text.</p><span class="flip-hint">flip for the fix ↻</span></div>
-      <div class="face back sketch"><span class="tag t-good">fix</span><h3>Check by hand</h3><p>Compare 20 Arabic judgments with a lawyer's before trusting the numbers.</p></div>
-    </div></div>
-    <div class="flip" tabindex="0" role="button" aria-label="Noise: flip for the fix"><div class="flip-inner">
-      <div class="face front sketch"><span class="tag t-bad">bias</span><div class="blob b-violet"><span>±</span></div><h3>Noise</h3><p>Same input, slightly different score on every run.</p><span class="flip-hint">flip for the fix ↻</span></div>
-      <div class="face back sketch"><span class="tag t-good">fix</span><h3>Measure it</h3><p>Temperature 0, structured output, and run one config 3× to see the spread.</p></div>
-    </div></div>
-  </div>
+  <div class="anim grow" data-anim="biases"></div>
   <div class="callout">Log the judge model as an MLflow parameter: <b>a new judge means new scores</b>.</div>
   <aside class="notes">
     <ul>
-      <li>Ask the room for the fix before flipping each card.</li>
-      <li>Calibration and bias tests are take-home; just know they exist.</li>
+      <li>Four small experiments; ask the room to predict each result before you press.</li>
+      <li>→ 1 verbosity: same facts, the padded answer scores higher. → 2 self-preference: identical answers, the one from the judge's own family wins.</li>
+      <li>→ 3 language: the same answer in Arabic scores lower. → 4 noise: one input, three different scores.</li>
+      <li>Calibration and bias tests are take-home; know they exist.</li>
     </ul>
   </aside>
 </section>
@@ -679,24 +674,15 @@ aside.notes { display: none; }
 
 <!-- ===================================================== 16 · LEGAL CHECKS -->
 <section class="slide" data-section="Judging answers" data-min="1.5" data-title="Domain checks in plain code">
-  <div class="kicker">Judging answers</div>
+  <div class="kicker">Judging answers · press → to step through</div>
   <h2>If code can check it, don't pay a judge</h2>
-  <table class="tbl">
-    <thead><tr><th>Check</th><th>Rule</th><th>Why a lawyer cares</th></tr></thead>
-    <tbody>
-      <tr><td><code>citation_present</code></td><td>answer cites at least one article</td><td>an uncited answer can't be verified</td></tr>
-      <tr><td><code>citation_grounded</code></td><td>cited ⊆ retrieved</td><td><mark>phantom citations</mark> come from model memory</td></tr>
-      <tr><td><code>citation_correct</code></td><td>cited ∩ gold ≠ ∅</td><td>the right article, not a neighbour</td></tr>
-      <tr><td><code>repeal_flagged</code></td><td>says “repealed” for 54–80</td><td>repealed law answered as live law</td></tr>
-      <tr><td><code>refused_out_of_scope</code></td><td>declines criminal-law questions</td><td>inventing law is worse than “not covered”</td></tr>
-    </tbody>
-  </table>
-  <p class="small"><code>cited_articles("<bdi lang="ar">وفقاً للمادة ١٤٧ والمادة 148</bdi>")</code> → <code>{147, 148}</code> · Arabic-Indic digits normalised · see <code>legal_checks.py</code></p>
+  <div class="anim grow" data-anim="legal"></div>
   <aside class="notes">
     <ul>
-      <li>These are deterministic, free, and closer to what a legal reviewer checks first.</li>
-      <li>citation_grounded links to W2's <code>ensure_article_citations</code> discussion: we now measure how often it is needed.</li>
-      <li>Not-applicable is recorded as None, not 0, so averages stay honest.</li>
+      <li>→ 1: a regex finds every citation, Arabic or English. → 2: Arabic-Indic digits are normalised: ١٤٧ → 147.</li>
+      <li>→ 3: citation_grounded: 147 is in the retrieved set, 375 is not, so it is a phantom (came from model memory).</li>
+      <li>→ 4: citation_correct: 147 is a gold article. → 5: a repealed-article answer with no mention of repeal fails.</li>
+      <li>If code can check it, don't pay a judge. Code: <code>legal_checks.py</code>.</li>
     </ul>
   </aside>
 </section>
@@ -719,15 +705,16 @@ aside.notes { display: none; }
 
 <!-- ===================================================== 18 · PIPELINE -->
 <section class="slide" data-section="The code" data-min="1.5" data-title="How the eval module is wired">
-  <div class="kicker">The code · src/evaluation/ · press → to build</div>
+  <div class="kicker">The code · press → to step through</div>
   <h2>A module, not a notebook</h2>
-  <div class="diagram grow">{{svg:eval-pipeline}}</div>
+  <div class="anim grow" data-anim="pipeline"></div>
   <aside class="notes">
     <ul>
-      <li>Each → builds the next row, and dots show records moving: asked, scored for free, scored by the judge, logged, and finally the gate exits 1 on the planted phantom citation.</li>
-      <li>The reference repo evaluates in notebooks (<code>experiments/evaluation_*.ipynb</code>). We move it into <code>src/evaluation/</code>.</li>
-      <li>Free scorers first, paid scorer last and optional (<code>--skip-ragas</code>).</li>
-      <li>The evaluator only talks to the system over <code>/ask</code>. It never imports retrieval code.</li>
+      <li>This is literally what <code>python -m evaluation run</code> does.</li>
+      <li>→ 1: runner.py asks the API every golden question; each row gets the answer and the article numbers it used.</li>
+      <li>→ 2: free scorers fill hit@5 and citation columns. → 3: the judge fills faithfulness, one paid call per cell.</li>
+      <li>→ 4: column means → report.json → one MLflow run. → 5: the gate compares with the floors: exit 1, the PR cannot merge (W5 wires this).</li>
+      <li>The reference repo evaluates in notebooks; a notebook can't be a CI gate.</li>
     </ul>
   </aside>
 </section>
@@ -766,32 +753,15 @@ aside.notes { display: none; }
 
 <!-- ===================================================== 21 · MLFLOW -->
 <section class="slide" data-section="Experiments" data-min="1" data-title="Every eval is an MLflow run">
-  <div class="kicker">Experiments</div>
+  <div class="kicker">Experiments · press → to step through</div>
   <h2>Every evaluation is an MLflow run</h2>
-  <div class="cols-2 grow">
-    <div style="display:grid; gap:14px; align-content:start">
-      <div class="card sketch"><span class="tag t-vio">params</span><p>what you changed: <code>chunking</code> · <code>top_k</code> · <code>retrieval</code> · <code>use_reranker</code> · <code>judge</code> · <code>golden_set_hash</code></p></div>
-      <div class="card sketch"><span class="tag t-good">metrics</span><p>what you got: hit@5, MRR, faithfulness, context recall, citation_grounded…</p></div>
-      <div class="card sketch"><span class="tag t-acc">artifacts + tags</span><p><code>per_question.csv</code> · <code>report.json</code> · <code>git_sha</code></p></div>
-    </div>
-    <div class="card sketch">
-      <h3>One run per table</h3>
-      <table class="tbl" style="font-size:23px">
-        <tbody>
-          <tr><td>1</td><td>per-article chunks (baseline)</td></tr>
-          <tr><td>2</td><td>512-token chunks</td></tr>
-          <tr><td>3</td><td><code>--retrieval dense</code></td></tr>
-          <tr><td>4</td><td><code>--no-reranker</code></td></tr>
-          <tr><td>5</td><td><code>--top-k 5</code> · <code>--top-k 20</code></td></tr>
-        </tbody>
-      </table>
-      <p class="small">Each table runs one configuration against the same golden set. We compare them on the next slide.</p>
-    </div>
-  </div>
+  <div class="anim grow" data-anim="mlflow"></div>
   <aside class="notes">
     <ul>
-      <li>Shared tracking server for the room, or each laptop with <code>MLFLOW_TRACKING_URI=sqlite:///mlflow.db</code> and screen-share the best one.</li>
-      <li>The payoff: W1 and W2 decisions are now justified by numbers, not by assertion.</li>
+      <li>Each run: set the config knobs, run the eval, and a run card (params, metrics, artifacts, tags) lands in the experiment table.</li>
+      <li>→ 1 baseline, → 2 512-token chunks, → 3 dense only. Change one knob at a time.</li>
+      <li>→ 4: compare. 512-token chunks drop hit@5 because chunks no longer map to articles: W1's design, justified by numbers.</li>
+      <li>In the room: each table runs one configuration.</li>
     </ul>
   </aside>
 </section>
@@ -837,13 +807,14 @@ aside.notes { display: none; }
 
 <!-- ===================================================== 24 · FLYWHEEL -->
 <section class="slide" data-section="Wrap-up" data-min="1" data-title="Eval-driven development">
-  <div class="kicker">Wrap-up · press → to go round</div>
+  <div class="kicker">Wrap-up · press → to step through</div>
   <h2>Evaluation is a loop, not a step</h2>
-  <div class="diagram grow">{{svg:flywheel}}</div>
+  <div class="anim grow" data-anim="loop"></div>
   <aside class="notes">
     <ul>
-      <li>Every change gets measured. Every failure in production becomes a new golden question. The set grows; the system can't silently regress.</li>
-      <li>Hand-off to W4: "you'll re-run this after every optimisation." And W5: "you'll wire the gate into CI."</li>
+      <li>Follow one change: lower top_k → eval → compare with main → gate passes → ship and observe.</li>
+      <li>A user asks about the repealed Art. 60 and gets a wrong answer in a trace: that becomes golden question 21.</li>
+      <li>The exam keeps growing, so the system can't quietly regress. Hand-off to W4 and W5.</li>
     </ul>
   </aside>
 </section>
@@ -916,6 +887,8 @@ aside.notes { display: none; }
 
 <script>{{ROUGH_JS}}</script>
 <script>{{EXPLAINERS_JS}}</script>
+<script>window.W3_SPRITES = {{SPRITES_JSON}};</script>
+<script>{{PROCESSES_JS}}</script>
 <script type="application/json" id="code-data">{{CODE_DATA}}</script>
 <script type="application/json" id="record-data">{{RECORD_DATA}}</script>
 <script>
